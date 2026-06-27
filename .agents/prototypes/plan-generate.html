@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate plan · My Meal</title>
+
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="topbar__brand">My Meal</span>
+        <button type="button" class="topbar__menu" data-nav-open aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="nav-backdrop" data-nav-close hidden></div>
+
+      <aside class="sidebar" id="primary-nav" aria-label="Primary">
+        <div class="sidebar__brand">My Meal</div>
+        <nav class="sidebar__nav">
+          <a href="index.html">
+            <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+          </a>
+          <a href="plan-view.html" aria-current="page">
+            <i data-lucide="calendar-days"></i><span>Plan</span>
+          </a>
+          <a href="dishes.html">
+            <i data-lucide="utensils"></i><span>Dishes</span>
+          </a>
+          <a href="shopping-list.html">
+            <i data-lucide="shopping-cart"></i><span>Shopping list</span>
+          </a>
+          <a href="plan-history.html">
+            <i data-lucide="history"></i><span>History</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__spacer"></div>
+        <hr class="sidebar__divider" />
+
+        <div class="sidebar__footer">
+          <button type="button" class="sidebar__theme" data-theme-toggle aria-label="Toggle theme">
+            <i data-lucide="sun" data-theme-icon-sun hidden></i>
+            <i data-lucide="moon" data-theme-icon-moon></i>
+            <span data-theme-label>Theme</span>
+          </button>
+          <div class="sidebar__user">
+            <span class="avatar">A</span>
+            <span class="sidebar__user-name">Alex Tran</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main__inner">
+          <a class="link-arrow mb-16" href="plan-view.html"><i data-lucide="chevron-left" style="width:14px;height:14px;vertical-align:middle;"></i> Plan view</a>
+
+          <h1 class="mb-24">Generate plan</h1>
+
+          <p class="text-meta mb-24">These settings control this plan and how future plans are scheduled.</p>
+
+          <div class="card">
+            <div class="stack gap-16">
+              <div>
+                <label class="text-micro" for="start-date" style="display:block;margin-bottom:4px;">Start date</label>
+                <input class="input" type="date" id="start-date" value="2026-06-22" />
+              </div>
+
+              <div>
+                <span class="text-micro" style="display:block;margin-bottom:4px;">Duration</span>
+                <div class="row gap-8 items-center">
+                  <input class="input" type="number" id="duration" value="2" min="1" style="width:80px;" />
+                  <div class="segmented" id="duration-unit">
+                    <button class="segmented__btn" aria-pressed="true" data-value="Weeks">Weeks</button>
+                    <button class="segmented__btn" aria-pressed="false" data-value="Days">Days</button>
+                  </div>
+                </div>
+                <p class="text-meta mt-8">Default: 2 weeks (14 days)</p>
+              </div>
+
+              <div class="plan-preview">
+                <p>This plan runs Jun 22 to Jul 5.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="row gap-8 mt-24" style="justify-content: flex-end;">
+            <a class="btn" href="plan-view.html">Cancel</a>
+            <a class="btn btn--primary" href="plan-view.html">Generate plan</a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

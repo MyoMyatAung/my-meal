@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in · My Meal</title>
+
+    <!-- Apply stored theme before paint to avoid a flash. -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="auth">
+      <!-- Icon-only theme toggle (auth has no sidebar; §9 wants the toggle on every page). -->
+      <button type="button" class="btn-icon auth__theme" data-theme-toggle aria-label="Toggle theme">
+        <i data-lucide="sun" data-theme-icon-sun hidden></i>
+        <i data-lucide="moon" data-theme-icon-moon></i>
+      </button>
+
+      <div class="card auth__card">
+        <p class="auth__brand">My Meal</p>
+        <p class="auth__tagline">Plan meals, one calm week at a time.</p>
+
+        <!-- Sign in / Sign up tabs (§8.1). Inline script toggles `hidden`; no reload. -->
+        <div class="segmented auth__toggle" role="tablist" aria-label="Authentication mode">
+          <button
+            type="button"
+            class="segmented__btn"
+            role="tab"
+            aria-selected="true"
+            aria-controls="signin-form"
+            id="signin-tab"
+            data-auth-tab="signin"
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            class="segmented__btn"
+            role="tab"
+            aria-selected="false"
+            aria-controls="signup-form"
+            id="signup-tab"
+            data-auth-tab="signup"
+          >
+            Sign up
+          </button>
+        </div>
+
+        <!-- Sign in -->
+        <section id="signin-form" role="tabpanel" aria-labelledby="signin-tab">
+          <form action="index.html" method="get" class="stack gap-12">
+            <label class="stack gap-8">
+              <span class="text-micro">Email</span>
+              <input class="input" type="email" name="email" placeholder="you@example.com" autocomplete="email" />
+            </label>
+            <label class="stack gap-8">
+              <span class="text-micro">Password</span>
+              <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+            <button type="submit" class="btn btn--primary">Sign in</button>
+          </form>
+
+          <p class="auth__switch">
+            Don't have an account?
+            <a href="#" role="button" data-auth-switch="signup">Sign up</a>
+          </p>
+        </section>
+
+        <!-- Sign up -->
+        <section id="signup-form" role="tabpanel" aria-labelledby="signup-tab" hidden>
+          <form action="index.html" method="get" class="stack gap-12">
+            <label class="stack gap-8">
+              <span class="text-micro">Name</span>
+              <input class="input" type="text" name="name" placeholder="Alex Tran" autocomplete="name" />
+            </label>
+            <label class="stack gap-8">
+              <span class="text-micro">Email</span>
+              <input class="input" type="email" name="email" placeholder="you@example.com" autocomplete="email" />
+            </label>
+            <label class="stack gap-8">
+              <span class="text-micro">Password</span>
+              <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="new-password" />
+            </label>
+            <button type="submit" class="btn btn--primary">Create account</button>
+          </form>
+
+          <p class="auth__switch">
+            Already have an account?
+            <a href="#" role="button" data-auth-switch="signin">Sign in</a>
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- Page-specific: Sign in / Sign up tab switching (§8.1, §9). -->
+    <script>
+      (function () {
+        var tabs = document.querySelectorAll("[data-auth-tab]");
+        var switchers = document.querySelectorAll("[data-auth-switch]");
+        var panels = {
+          signin: document.getElementById("signin-form"),
+          signup: document.getElementById("signup-form"),
+        };
+
+        function setActive(mode) {
+          tabs.forEach(function (btn) {
+            var on = btn.dataset.authTab === mode;
+            btn.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          Object.keys(panels).forEach(function (key) {
+            if (panels[key]) panels[key].hidden = key !== mode;
+          });
+        }
+
+        tabs.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setActive(btn.dataset.authTab);
+          });
+        });
+        switchers.forEach(function (link) {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            setActive(link.dataset.authSwitch);
+          });
+        });
+
+        // Re-render icons now that the visible panel may have changed.
+        document.querySelectorAll("[data-auth-tab], [data-auth-switch]").forEach(function (el) {
+          el.addEventListener("click", function () {
+            if (window.lucide) window.lucide.createIcons();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

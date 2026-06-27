@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>History · My Meal</title>
+
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="topbar__brand">My Meal</span>
+        <button type="button" class="topbar__menu" data-nav-open aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="nav-backdrop" data-nav-close hidden></div>
+
+      <aside class="sidebar" id="primary-nav" aria-label="Primary">
+        <div class="sidebar__brand">My Meal</div>
+        <nav class="sidebar__nav">
+          <a href="index.html">
+            <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+          </a>
+          <a href="plan-view.html">
+            <i data-lucide="calendar-days"></i><span>Plan</span>
+          </a>
+          <a href="dishes.html">
+            <i data-lucide="utensils"></i><span>Dishes</span>
+          </a>
+          <a href="shopping-list.html">
+            <i data-lucide="shopping-cart"></i><span>Shopping list</span>
+          </a>
+          <a href="plan-history.html" aria-current="page">
+            <i data-lucide="history"></i><span>History</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__spacer"></div>
+        <hr class="sidebar__divider" />
+
+        <div class="sidebar__footer">
+          <button type="button" class="sidebar__theme" data-theme-toggle aria-label="Toggle theme">
+            <i data-lucide="sun" data-theme-icon-sun hidden></i>
+            <i data-lucide="moon" data-theme-icon-moon></i>
+            <span data-theme-label>Theme</span>
+          </button>
+          <div class="sidebar__user">
+            <span class="avatar">A</span>
+            <span class="sidebar__user-name">Alex Tran</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main__inner">
+          <h1 class="mb-24">Past plans</h1>
+
+          <div class="stack gap-16">
+            <!-- In the real app each card would load its own historical data.
+                 For the prototype they all point at plan-view.html. -->
+            <a class="card history-card" href="plan-view.html">
+              <div class="row between items-center">
+                <div class="row gap-12 items-center">
+                  <i data-lucide="calendar" style="width:20px;height:20px;color:var(--primary);"></i>
+                  <div>
+                    <h2>Jun 8 – Jun 21, 2026</h2>
+                    <p class="text-meta mt-8">14 days · 14 ingredients</p>
+                  </div>
+                </div>
+                <i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--muted-foreground);"></i>
+              </div>
+            </a>
+
+            <a class="card history-card" href="plan-view.html">
+              <div class="row between items-center">
+                <div class="row gap-12 items-center">
+                  <i data-lucide="calendar" style="width:20px;height:20px;color:var(--primary);"></i>
+                  <div>
+                    <h2>May 25 – Jun 7, 2026</h2>
+                    <p class="text-meta mt-8">14 days · 14 ingredients</p>
+                  </div>
+                </div>
+                <i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--muted-foreground);"></i>
+              </div>
+            </a>
+
+            <a class="card history-card" href="plan-view.html">
+              <div class="row between items-center">
+                <div class="row gap-12 items-center">
+                  <i data-lucide="calendar" style="width:20px;height:20px;color:var(--primary);"></i>
+                  <div>
+                    <h2>May 11 – May 24, 2026</h2>
+                    <p class="text-meta mt-8">14 days · 14 ingredients</p>
+                  </div>
+                </div>
+                <i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--muted-foreground);"></i>
+              </div>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

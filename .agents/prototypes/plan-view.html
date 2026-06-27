@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plan view · My Meal</title>
+
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="topbar__brand">My Meal</span>
+        <button type="button" class="topbar__menu" data-nav-open aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="nav-backdrop" data-nav-close hidden></div>
+
+      <aside class="sidebar" id="primary-nav" aria-label="Primary">
+        <div class="sidebar__brand">My Meal</div>
+        <nav class="sidebar__nav">
+          <a href="index.html">
+            <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+          </a>
+          <a href="plan-view.html" aria-current="page">
+            <i data-lucide="calendar-days"></i><span>Plan</span>
+          </a>
+          <a href="dishes.html">
+            <i data-lucide="utensils"></i><span>Dishes</span>
+          </a>
+          <a href="shopping-list.html">
+            <i data-lucide="shopping-cart"></i><span>Shopping list</span>
+          </a>
+          <a href="plan-history.html">
+            <i data-lucide="history"></i><span>History</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__spacer"></div>
+        <hr class="sidebar__divider" />
+
+        <div class="sidebar__footer">
+          <button type="button" class="sidebar__theme" data-theme-toggle aria-label="Toggle theme">
+            <i data-lucide="sun" data-theme-icon-sun hidden></i>
+            <i data-lucide="moon" data-theme-icon-moon></i>
+            <span data-theme-label>Theme</span>
+          </button>
+          <div class="sidebar__user">
+            <span class="avatar">A</span>
+            <span class="sidebar__user-name">Alex Tran</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main__inner">
+          <header class="row between items-start mb-8">
+            <h1>Jun 22 – Jul 5</h1>
+            <div class="row gap-8">
+              <a class="btn" href="plan-generate.html"><i data-lucide="refresh-cw"></i> Regenerate</a>
+              <a class="btn" href="plan-edit.html"><i data-lucide="pencil"></i> Edit plan</a>
+            </div>
+          </header>
+
+          <a class="link-arrow mb-24" href="plan-history.html">View past plans →</a>
+
+          <!-- Week 1: Jun 22–28 -->
+          <div class="stack gap-16">
+            <!-- Mon Jun 22 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Mon, Jun 22</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Avocado toast</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Chicken potato curry</span>
+                  <span class="badge">Mushroom spinach</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tue Jun 23 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Tue, Jun 23</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Tomato egg soup</span>
+                  <span class="badge">Steamed fish with ginger</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wed Jun 24 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Wed, Jun 24</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Banana oat pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Chicken potato curry</span>
+                  <span class="badge">Stir-fried morning glory</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thu Jun 25 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Thu, Jun 25</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Avocado toast</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Sweet corn soup</span>
+                  <span class="badge">Mushroom spinach</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fri Jun 26 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Fri, Jun 26</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Tomato egg soup</span>
+                  <span class="badge">Chicken potato curry</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sat Jun 27 — Special Day -->
+            <div class="card day-card day-card--special">
+              <h2 class="mb-12">Sat, Jun 27 <span class="badge badge--accent">Special day</span></h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Banana oat pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <span class="badge badge--accent"><i data-lucide="star" style="width:12px;height:12px;margin-right:4px;"></i> Hainanese chicken rice</span>
+              </div>
+            </div>
+
+            <!-- Sun Jun 28 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sun, Jun 28</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Avocado toast</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Steamed fish with ginger</span>
+                  <span class="badge">Sweet corn soup</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Week 2: Jun 29 – Jul 5 -->
+
+            <!-- Mon Jun 29 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Mon, Jun 29</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Stir-fried morning glory</span>
+                  <span class="badge">Tomato egg soup</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tue Jun 30 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Tue, Jun 30</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Banana oat pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Chicken potato curry</span>
+                  <span class="badge">Mushroom spinach</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wed Jul 1 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Wed, Jul 1</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Avocado toast</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Steamed fish with ginger</span>
+                  <span class="badge">Sweet corn soup</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thu Jul 2 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Thu, Jul 2</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Tomato egg soup</span>
+                  <span class="badge">Stir-fried morning glory</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fri Jul 3 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Fri, Jul 3</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Banana oat pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Mushroom spinach</span>
+                  <span class="badge">Chicken potato curry</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sat Jul 4 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sat, Jul 4</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Avocado toast</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Sweet corn soup</span>
+                  <span class="badge">Steamed fish with ginger</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sun Jul 5 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sun, Jul 5</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="badge">Pancakes</span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="badge">Tomato egg soup</span>
+                  <span class="badge">Mushroom spinach</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

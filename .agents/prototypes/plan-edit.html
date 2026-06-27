@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit plan · My Meal</title>
+
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="topbar__brand">My Meal</span>
+        <button type="button" class="topbar__menu" data-nav-open aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="nav-backdrop" data-nav-close hidden></div>
+
+      <aside class="sidebar" id="primary-nav" aria-label="Primary">
+        <div class="sidebar__brand">My Meal</div>
+        <nav class="sidebar__nav">
+          <a href="index.html">
+            <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+          </a>
+          <a href="plan-view.html" aria-current="page">
+            <i data-lucide="calendar-days"></i><span>Plan</span>
+          </a>
+          <a href="dishes.html">
+            <i data-lucide="utensils"></i><span>Dishes</span>
+          </a>
+          <a href="shopping-list.html">
+            <i data-lucide="shopping-cart"></i><span>Shopping list</span>
+          </a>
+          <a href="plan-history.html">
+            <i data-lucide="history"></i><span>History</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__spacer"></div>
+        <hr class="sidebar__divider" />
+
+        <div class="sidebar__footer">
+          <button type="button" class="sidebar__theme" data-theme-toggle aria-label="Toggle theme">
+            <i data-lucide="sun" data-theme-icon-sun hidden></i>
+            <i data-lucide="moon" data-theme-icon-moon></i>
+            <span data-theme-label>Theme</span>
+          </button>
+          <div class="sidebar__user">
+            <span class="avatar">A</span>
+            <span class="sidebar__user-name">Alex Tran</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main__inner">
+          <a class="link-arrow mb-16" href="plan-view.html"><i data-lucide="chevron-left" style="width:14px;height:14px;vertical-align:middle;"></i> Plan view</a>
+
+          <h1 class="mb-24">Edit plan</h1>
+
+          <div class="stack gap-16">
+            <!-- Mon Jun 22 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Mon, Jun 22</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Avocado toast <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Chicken potato curry <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Mushroom spinach <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tue Jun 23 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Tue, Jun 23</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Tomato egg soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Steamed fish with ginger <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wed Jun 24 — with warning -->
+            <div class="card day-card day-card--warning">
+              <h2 class="mb-12">Wed, Jun 24</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Banana oat pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Chicken potato curry <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Stir-fried morning glory <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+              <div class="warning-row">
+                <i data-lucide="triangle-alert" style="width:14px;height:14px;"></i>
+                <span>Two lunch dishes share a flavor (Spicy) — saved anyway</span>
+              </div>
+            </div>
+
+            <!-- Thu Jun 25 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Thu, Jun 25</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Avocado toast <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Sweet corn soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Mushroom spinach <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fri Jun 26 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Fri, Jun 26</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Tomato egg soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Chicken potato curry <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sat Jun 27 — Special Day -->
+            <div class="card day-card day-card--special">
+              <h2 class="mb-12">Sat, Jun 27 <span class="badge badge--accent">Special day</span></h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Banana oat pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <span class="dish-pill dish-pill--special" data-meal="Lunch"><i data-lucide="star" style="width:12px;height:12px;margin-right:4px;"></i> Hainanese chicken rice <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+            </div>
+
+            <!-- Sun Jun 28 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sun, Jun 28</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Avocado toast <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Steamed fish with ginger <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Sweet corn soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mon Jun 29 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Mon, Jun 29</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Stir-fried morning glory <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Tomato egg soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tue Jun 30 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Tue, Jun 30</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Banana oat pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Chicken potato curry <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Mushroom spinach <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wed Jul 1 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Wed, Jul 1</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Avocado toast <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Steamed fish with ginger <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Sweet corn soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thu Jul 2 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Thu, Jul 2</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Tomato egg soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Stir-fried morning glory <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fri Jul 3 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Fri, Jul 3</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Banana oat pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Mushroom spinach <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Chicken potato curry <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sat Jul 4 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sat, Jul 4</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Avocado toast <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Sweet corn soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Steamed fish with ginger <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sun Jul 5 -->
+            <div class="card day-card">
+              <h2 class="mb-12">Sun, Jul 5</h2>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="sun" style="width:14px;height:14px;"></i> Breakfast</span>
+                <span class="dish-pill" data-meal="Breakfast">Pancakes <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+              </div>
+              <div class="day-card__row">
+                <span class="day-card__label"><i data-lucide="utensils" style="width:14px;height:14px;"></i> Lunch</span>
+                <div class="row gap-8 wrap">
+                  <span class="dish-pill" data-meal="Lunch">Tomato egg soup <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                  <span class="dish-pill" data-meal="Lunch">Mushroom spinach <button type="button" class="dish-pill__edit" aria-label="Swap dish"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row gap-8 mt-24" style="justify-content: flex-end;">
+            <a class="btn" href="plan-view.html">Cancel</a>
+            <a class="btn btn--primary" href="plan-view.html">Save changes</a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      (function () {
+        var breakfastOptions = ["Avocado toast", "Pancakes", "Banana oat pancakes"];
+        var lunchOptions = [
+          "Chicken potato curry", "Mushroom spinach", "Tomato egg soup",
+          "Hainanese chicken rice", "Steamed fish with ginger",
+          "Stir-fried morning glory", "Sweet corn soup"
+        ];
+
+        document.addEventListener("click", function (e) {
+          var editBtn = e.target.closest(".dish-pill__edit");
+          if (!editBtn) return;
+
+          var pill = editBtn.closest(".dish-pill");
+          if (!pill) return;
+
+          var existing = pill.querySelector("select");
+          if (existing) {
+            pill.textContent = existing.value;
+            pill.appendChild(createEditBtn());
+            return;
+          }
+
+          var meal = pill.getAttribute("data-meal");
+          var options = meal === "Breakfast" ? breakfastOptions : lunchOptions;
+          var currentText = pill.childNodes[0].textContent.trim();
+
+          var select = document.createElement("select");
+          select.className = "select";
+          select.style.cssText = "width:auto;font-size:13px;padding:4px 8px;";
+
+          options.forEach(function (opt) {
+            var option = document.createElement("option");
+            option.value = opt;
+            option.textContent = opt;
+            if (opt === currentText) option.selected = true;
+            select.appendChild(option);
+          });
+
+          pill.textContent = "";
+          pill.appendChild(select);
+          select.focus();
+
+          select.addEventListener("change", function () {
+            pill.textContent = select.value;
+            pill.appendChild(createEditBtn());
+          });
+
+          select.addEventListener("blur", function () {
+            pill.textContent = select.value;
+            pill.appendChild(createEditBtn());
+          });
+        });
+
+        function createEditBtn() {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "dish-pill__edit";
+          btn.setAttribute("aria-label", "Swap dish");
+          btn.innerHTML = '<i data-lucide="pencil" style="width:12px;height:12px;"></i>';
+          if (window.lucide) window.lucide.createIcons({ nodes: [btn] });
+          return btn;
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dishes · My Meal</title>
+
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <span class="topbar__brand">My Meal</span>
+        <button type="button" class="topbar__menu" data-nav-open aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="nav-backdrop" data-nav-close hidden></div>
+
+      <aside class="sidebar" id="primary-nav" aria-label="Primary">
+        <div class="sidebar__brand">My Meal</div>
+        <nav class="sidebar__nav">
+          <a href="index.html">
+            <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+          </a>
+          <a href="plan-view.html">
+            <i data-lucide="calendar-days"></i><span>Plan</span>
+          </a>
+          <a href="dishes.html" aria-current="page">
+            <i data-lucide="utensils"></i><span>Dishes</span>
+          </a>
+          <a href="shopping-list.html">
+            <i data-lucide="shopping-cart"></i><span>Shopping list</span>
+          </a>
+          <a href="plan-history.html">
+            <i data-lucide="history"></i><span>History</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__spacer"></div>
+        <hr class="sidebar__divider" />
+
+        <div class="sidebar__footer">
+          <button type="button" class="sidebar__theme" data-theme-toggle aria-label="Toggle theme">
+            <i data-lucide="sun" data-theme-icon-sun hidden></i>
+            <i data-lucide="moon" data-theme-icon-moon></i>
+            <span data-theme-label>Theme</span>
+          </button>
+          <div class="sidebar__user">
+            <span class="avatar">A</span>
+            <span class="sidebar__user-name">Alex Tran</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="main__inner">
+          <header class="row between items-start mb-24">
+            <h1>Dish library</h1>
+            <a class="btn btn--primary" href="dish-form.html">
+              <i data-lucide="plus"></i> Add dish
+            </a>
+          </header>
+
+          <div class="segmented mb-24" id="filter-control">
+            <button class="segmented__btn" aria-pressed="true" data-filter="all">All</button>
+            <button class="segmented__btn" aria-pressed="false" data-filter="Breakfast">Breakfast</button>
+            <button class="segmented__btn" aria-pressed="false" data-filter="Lunch">Lunch</button>
+          </div>
+
+          <div class="grid-3" id="dish-grid">
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=1" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Chicken potato curry</h2>
+              <p class="text-meta mb-8">Main · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Spicy</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=2" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Mushroom spinach</h2>
+              <p class="text-meta mb-8">Side · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Spicy</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=3" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Tomato egg soup</h2>
+              <p class="text-meta mb-8">Soup · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Sour</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=4" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Hainanese chicken rice <i data-lucide="star" class="dish-card__star"></i></h2>
+              <p class="text-meta mb-8">Main · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Salty</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=5" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Steamed fish with ginger</h2>
+              <p class="text-meta mb-8">Main · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Salty</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=6" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Stir-fried morning glory</h2>
+              <p class="text-meta mb-8">Side · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Salty</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Lunch">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=7" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Sweet corn soup</h2>
+              <p class="text-meta mb-8">Soup · Lunch</p>
+              <div class="row gap-8 wrap"><span class="badge">Sweet</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Breakfast">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=8" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Avocado toast</h2>
+              <p class="text-meta mb-8">Main · Breakfast</p>
+              <div class="row gap-8 wrap"><span class="badge">Salty</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Breakfast">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=9" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Pancakes <i data-lucide="star" class="dish-card__star"></i></h2>
+              <p class="text-meta mb-8">Main · Breakfast</p>
+              <div class="row gap-8 wrap"><span class="badge">Sweet</span></div>
+            </div>
+
+            <div class="card dish-card" data-meal-time="Breakfast">
+              <div class="dish-card__actions">
+                <a class="btn-icon" href="dish-form.html?id=10" aria-label="Edit dish"><i data-lucide="pencil"></i></a>
+                <button type="button" class="btn-icon dish-card__delete" aria-label="Delete dish"><i data-lucide="trash-2"></i></button>
+              </div>
+              <h2 class="mb-8">Banana oat pancakes</h2>
+              <p class="text-meta mb-8">Main · Breakfast</p>
+              <div class="row gap-8 wrap"><span class="badge">Sweet</span></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Delete confirmation modal -->
+    <div class="modal" id="delete-modal">
+      <div class="modal__dialog">
+        <h2 class="mb-8">Delete dish?</h2>
+        <p class="text-meta mb-24">This action cannot be undone.</p>
+        <div class="row gap-8" style="justify-content: flex-end;">
+          <button type="button" class="btn modal__cancel">Cancel</button>
+          <button type="button" class="btn btn--destructive modal__confirm">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      (function () {
+        var filterControl = document.getElementById("filter-control");
+        var grid = document.getElementById("dish-grid");
+        var cards = grid.querySelectorAll(".dish-card");
+        var deleteModal = document.getElementById("delete-modal");
+
+        filterControl.addEventListener("click", function (e) {
+          var btn = e.target.closest(".segmented__btn");
+          if (!btn) return;
+          var filter = btn.getAttribute("data-filter");
+          cards.forEach(function (card) {
+            if (filter === "all" || card.getAttribute("data-meal-time") === filter) {
+              card.style.display = "";
+            } else {
+              card.style.display = "none";
+            }
+          });
+        });
+
+        grid.addEventListener("click", function (e) {
+          if (e.target.closest(".dish-card__delete")) {
+            deleteModal.setAttribute("data-open", "true");
+          }
+        });
+
+        deleteModal.querySelector(".modal__cancel").addEventListener("click", function () {
+          deleteModal.removeAttribute("data-open");
+        });
+        deleteModal.querySelector(".modal__confirm").addEventListener("click", function () {
+          deleteModal.removeAttribute("data-open");
+        });
+      })();
+    </script>
+  </body>
+</html>
