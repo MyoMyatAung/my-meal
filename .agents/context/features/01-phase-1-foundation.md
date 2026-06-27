@@ -50,24 +50,22 @@ Required by `@auth/prisma-adapter`. Even if some tables are unused with JWT stra
 
 ```prisma
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?   // For Credentials provider — not managed by Auth.js
-  accounts      Account[]
-  sessions      Session[]
-  dishes        Dish[]
-  ingredients   Ingredient[]
-  mealPlans     MealPlan[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String?
+  email       String?   @unique
+  password    String?   // For Credentials provider — not managed by Auth.js
+  account     Account?
+  sessions    Session[]
+  dishes      Dish[]
+  ingredients Ingredient[]
+  mealPlans   MealPlan[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @unique // one-to-one: each user has exactly one account
   type              String
   provider          String
   providerAccountId String
@@ -90,19 +88,20 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
 ```
 
 #### Domain Models
 
 ```prisma
+enum Category {
+  MAIN
+  SIDE
+  SOUP
+  SNACK
+  ACCOMPANIMENTS
+  OTHER
+}
+
 model Ingredient {
   id           String           @id @default(cuid())
   name         String
@@ -117,7 +116,7 @@ model Ingredient {
 model Dish {
   id           String              @id @default(cuid())
   name         String
-  category     String?             // e.g. "pasta", "salad", "soup" — freeform per user
+  category     Category            // enum: MAIN, SIDE, SOUP, SNACK, ACCOMPANIMENTS, OTHER
   mealTime     MealTime            // Breakfast or Lunch — exclusive
   isSpecial    Boolean             @default(false)
   isArchived   Boolean             @default(false)
@@ -206,6 +205,10 @@ enum MealTime {
 |---|---|
 | `password` on `User` | Auth.js doesn't manage Credentials passwords — we add it ourselves |
 | `Account` + `Session` tables | Required by `@auth/prisma-adapter` even if unused with JWT strategy in v1 |
+| One-to-one `User` ↔ `Account` | Each user has exactly one credentials account; `Account.userId` is `@unique` |
+| No `emailVerified` / `VerificationToken` | Email verification is out of scope for v1 (see project-overview.md) |
+| No `image` on `User` | Image upload is out of scope for v1 |
+| `Category` enum on `Dish` | Enforces valid categories at the DB level; replaces freeform string |
 | `DishFlavor` join table | Flavors are multi-select; a dish can have many flavors |
 | `DishIngredient` join table | Ingredients are per-user master list, chosen via combobox — never free text |
 | `@@unique([name, userId])` on `Ingredient` | Prevents duplicate ingredient names per user |
@@ -241,8 +244,8 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 |---|---|
 | Migration applied | `npx prisma migrate status` |
 | Client generated | `npx prisma generate` |
-| TypeScript compiles | `npm run typecheck` |
-| Build passes | `npm run build` |
+| TypeScript compiles | `pnpm run typecheck` |
+| Build passes | `pnpm run build` |
 | Tables exist | `npx prisma db pull` or check Neon console |
 
 ---

@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth.js Models ───────────────────────────────────────────────
+// Required by @auth/prisma-adapter. Even if some tables are unused
+// with JWT strategy in v1, they must exist for the adapter to work.
+
+model User {
+  id          String    @id @default(cuid())
+  name        String?
+  email       String?   @unique
+  password    String?   // For Credentials provider — not managed by Auth.js
+  account     Account?
+  sessions    Session[]
+  dishes      Dish[]
+  ingredients Ingredient[]
+  mealPlans   MealPlan[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @unique // one-to-one: each user has exactly one account
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────
+
+enum Category {
+  MAIN
+  SIDE
+  SOUP
+  SNACK
+  ACCOMPANIMENTS
+  OTHER
+}
+
+enum MealTime {
+  Breakfast
+  Lunch
+}
+
+// ─── Domain Models ─────────────────────────────────────────────────
+
+model Ingredient {
+  id            String           @id @default(cuid())
+  name          String
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishes        DishIngredient[]
+  shoppingItems ShoppingListItem[]
+
+  @@unique([name, userId])
+}
+
+model Dish {
+  id          String              @id @default(cuid())
+  name        String
+  category    Category            // enum: MAIN, SIDE, SOUP, SNACK, ACCOMPANIMENTS, OTHER
+  mealTime    MealTime            // Breakfast or Lunch — exclusive
+  isSpecial   Boolean             @default(false)
+  isArchived  Boolean             @default(false)
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flavors     DishFlavor[]
+  ingredients DishIngredient[]
+  planEntries MealPlanEntryDish[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model DishFlavor {
+  id     String @id @default(cuid())
+  dishId String
+  dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  flavor String // e.g. "spicy", "sweet", "umami"
+
+  @@unique([dishId, flavor])
+}
+
+model DishIngredient {
+  id           String     @id @default(cuid())
+  dishId       String
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, ingredientId])
+}
+
+model MealPlan {
+  id            String              @id @default(cuid())
+  startDate     DateTime
+  endDate       DateTime
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries       MealPlanEntry[]
+  shoppingItems ShoppingListItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model MealPlanEntry {
+  id         String               @id @default(cuid())
+  date       DateTime             // the specific day
+  mealTime   MealTime             // Breakfast or Lunch
+  mealPlanId String
+  mealPlan   MealPlan             @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  dishes     MealPlanEntryDish[]
+  createdAt  DateTime             @default(now())
+
+  @@unique([mealPlanId, date, mealTime])
+}
+
+model MealPlanEntryDish {
+  id        String         @id @default(cuid())
+  entryId   String
+  entry     MealPlanEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  dishId    String
+  dish      Dish           @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  sortOrder Int            @default(0) // for lunch with 2-3 dishes, controls display order
+}
+
+model ShoppingListItem {
+  id           String     @id @default(cuid())
+  mealPlanId   String
+  mealPlan     MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  isChecked    Boolean    @default(false)
+  dishName     String     // snapshot: dish name at generation time
+
+  @@unique([mealPlanId, ingredientId])
+}
