@@ -5,11 +5,11 @@ change.
 
 ## Current Phase
 
-- Phase 1 — Foundation: Prisma ✓ Complete
+- Phase 2 — Auth + Layout Shell: In Progress
 
 ## Current Goal
 
-- Phase 1 complete; ready for Phase 2 (Auth.js setup)
+- Phase 2: Auth.js + sign-in/sign-up pages + layout shell
 
 ## Completed
 
@@ -32,11 +32,12 @@ change.
 
 ## In Progress
 
-- None yet.
+- Phase 2 plan written to `.agents/context/features/02-auth-and-layout.md`
+- Awaiting implementation
 
 ## Next Up
 
-- Phase 2: Auth.js setup (Credentials provider, `lib/auth.ts`, session strategy)
+- Phase 2 implementation: install deps → auth config → auth pages → proxy → sidebar → layout
 
 ## Open Questions
 
