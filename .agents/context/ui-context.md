@@ -103,11 +103,9 @@ as a bug to fix, not a one-off override to accept.
 ## Typography
 
 `globals.css` wires `--font-sans` (and `--font-heading`, aliased to
-the same value) into Tailwind, but doesn't pin an actual typeface —
-that gets set wherever the project loads its font via `next/font` in
-`app/layout.tsx`, which isn't part of this file. **Open item:**
-confirm whether that's still Inter (matching the prototype) or a
-different face — not blocking, just unresolved.
+the same value) into Tailwind. The actual typeface is **Inter**, loaded
+via `next/font/google` in `app/layout.tsx` and applied via the
+`--font-sans` CSS variable. This matches the prototype.
 
 Tailwind's preflight strips default heading/paragraph styling, and
 shadcn doesn't reintroduce a type scale on its own — so raw text

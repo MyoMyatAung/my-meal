@@ -15,5 +15,9 @@
       ],
       "enabled": true
     }
+  },
+  "permission": {
+    "websearch": "allow",
+    "question": "allow"
   }
 }

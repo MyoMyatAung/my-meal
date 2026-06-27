@@ -7,7 +7,7 @@
 | Framework  | Next.js (App Router) + TypeScript        | Single codebase for frontend and backend; Server Components for reads, Server Actions for mutations |
 | UI         | Tailwind CSS + shadcn/ui                 | Component layer; design tokens carry over from the validated static prototype — see `ui-context.md` |
 | Auth       | Auth.js (NextAuth), Credentials provider | Email/password only; session is the sole access-control mechanism                              |
-| Database   | PostgreSQL via Prisma                    | The only persistent store in v1 — see Data Storage below                                       |
+| Database   | PostgreSQL via Prisma + Neon adapter   | The only persistent store in v1 — see Data Storage below                                       |
 | Validation | Zod                                      | Validates every Server Action's input at the boundary before any logic runs                    |
 | Hosting    | Vercel (app) + Neon (Postgres)           | Deployment target                                                                             |
 

@@ -11,6 +11,14 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+const themeScript = `
+(function() {
+  var theme = localStorage.getItem('theme') || 'system';
+  var resolved = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  document.documentElement.classList.add(resolved);
+})()
+`
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,7 +30,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
-      <body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body suppressHydrationWarning>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
