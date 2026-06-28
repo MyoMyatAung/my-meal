@@ -24,6 +24,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 
 **Deliverable:** Working auth flow (sign up, sign in, sign out) with a basic app shell.
 
+**Plan:** `.agents/context/features/02-auth-and-layout.md`
+
 ---
 
 ## Phase 3 — Dish Library
