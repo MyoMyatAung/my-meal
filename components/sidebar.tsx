@@ -37,7 +37,7 @@ interface SidebarProps {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
-  const { resolvedTheme, setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [prevPathname, setPrevPathname] = useState(pathname)
 
@@ -58,7 +58,24 @@ export function Sidebar({ user }: SidebarProps) {
     }
   }, [mobileOpen, closeMobile])
 
-  const isDarkTheme = resolvedTheme === "dark"
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
+
+  useEffect(() => {
+    const updateTheme = () => {
+      if (theme === "system") {
+        setIsDarkTheme(window.matchMedia("(prefers-color-scheme: dark)").matches)
+      } else {
+        setIsDarkTheme(theme === "dark")
+      }
+    }
+    updateTheme()
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)")
+      const handler = () => updateTheme()
+      mq.addEventListener("change", handler)
+      return () => mq.removeEventListener("change", handler)
+    }
+  }, [theme])
 
   const initial = user.name?.charAt(0)?.toUpperCase() ?? user.email?.charAt(0)?.toUpperCase() ?? "?"
 
@@ -147,9 +164,9 @@ export function Sidebar({ user }: SidebarProps) {
             className="flex items-center gap-2 rounded-none border border-input bg-surface-input px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-surface-hover"
           >
             {isDarkTheme ? (
-              <Sun className="size-4" />
-            ) : (
               <Moon className="size-4" />
+            ) : (
+              <Sun className="size-4" />
             )}
             {isDarkTheme ? "Light mode" : "Dark mode"}
           </button>

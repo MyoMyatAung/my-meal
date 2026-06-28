@@ -19,6 +19,7 @@ model User {
   sessions    Session[]
   dishes      Dish[]
   ingredients Ingredient[]
+  flavors     Flavor[]
   mealPlans   MealPlan[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -95,13 +96,24 @@ model Dish {
   updatedAt   DateTime            @updatedAt
 }
 
-model DishFlavor {
-  id     String @id @default(cuid())
-  dishId String
-  dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  flavor String // e.g. "spicy", "sweet", "umami"
+model Flavor {
+  id     String  @id @default(cuid())
+  name   String  // e.g. "spicy", "sweet", "umami"
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishes DishFlavor[]
 
-  @@unique([dishId, flavor])
+  @@unique([name, userId])
+}
+
+model DishFlavor {
+  id       String  @id @default(cuid())
+  dishId   String
+  dish     Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  flavorId String
+  flavor   Flavor  @relation(fields: [flavorId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, flavorId])
 }
 
 model DishIngredient {

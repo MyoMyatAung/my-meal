@@ -58,6 +58,7 @@ model User {
   sessions    Session[]
   dishes      Dish[]
   ingredients Ingredient[]
+  flavors     Flavor[]
   mealPlans   MealPlan[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -129,13 +130,24 @@ model Dish {
   updatedAt    DateTime            @updatedAt
 }
 
-model DishFlavor {
-  id     String @id @default(cuid())
-  dishId String
-  dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  flavor String // e.g. "spicy", "sweet", "umami"
+model Flavor {
+  id     String  @id @default(cuid())
+  name   String  // e.g. "spicy", "sweet", "umami"
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishes DishFlavor[]
 
-  @@unique([dishId, flavor])
+  @@unique([name, userId])
+}
+
+model DishFlavor {
+  id       String  @id @default(cuid())
+  dishId   String
+  dish     Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  flavorId String
+  flavor   Flavor  @relation(fields: [flavorId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, flavorId])
 }
 
 model DishIngredient {
@@ -209,10 +221,12 @@ enum MealTime {
 | No `emailVerified` / `VerificationToken` | Email verification is out of scope for v1 (see project-overview.md) |
 | No `image` on `User` | Image upload is out of scope for v1 |
 | `Category` enum on `Dish` | Enforces valid categories at the DB level; replaces freeform string |
-| `DishFlavor` join table | Flavors are multi-select; a dish can have many flavors |
+| `Flavor` registry model | Flavors are shared per-user; `DishFlavor` is a junction table with `flavorId` FK — prevents duplicate flavor strings across dishes |
+| `DishFlavor` junction table | Many-to-many link between Dish and Flavor; unique on `[dishId, flavorId]` |
 | `DishIngredient` join table | Ingredients are per-user master list, chosen via combobox — never free text |
 | `@@unique([name, userId])` on `Ingredient` | Prevents duplicate ingredient names per user |
-| `@@unique([dishId, flavor])` on `DishFlavor` | Prevents duplicate flavors on one dish |
+| `@@unique([name, userId])` on `Flavor` | Prevents duplicate flavor names per user |
+| `@@unique([dishId, flavorId])` on `DishFlavor` | Prevents duplicate flavors on one dish |
 | `@@unique([mealPlanId, date, mealTime])` on `MealPlanEntry` | One entry per day per meal time per plan |
 | `@@unique([mealPlanId, ingredientId])` on `ShoppingListItem` | Deduplicates ingredients across dishes in a plan |
 | `sortOrder` on `MealPlanEntryDish` | Lunch has 2-3 dishes — order matters for display |

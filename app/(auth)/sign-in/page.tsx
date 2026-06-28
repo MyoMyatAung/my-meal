@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { SignInForm } from "./sign-in-form"
 
@@ -11,7 +12,9 @@ export default function SignInPage() {
             Plan meals, one calm week at a time.
           </p>
         </div>
-        <SignInForm />
+        <Suspense>
+          <SignInForm />
+        </Suspense>
       </CardContent>
     </Card>
   )

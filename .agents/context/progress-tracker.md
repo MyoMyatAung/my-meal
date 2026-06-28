@@ -5,11 +5,11 @@ change.
 
 ## Current Phase
 
-- Phase 2 — Auth + Layout Shell: Completed
+- Phase 3 — Dish Library: Completed
 
 ## Current Goal
 
-- Phase 3 — Dish Library (next)
+- Phase 4 — Meal Plan Generation (next)
 
 ## Completed
 
@@ -20,6 +20,29 @@ change.
   - Created `lib/db.ts` (Prisma client singleton)
   - Ran initial migration against Neon (`20260627115619_init`)
   - Verified: migration status ✓, typecheck ✓, build ✓
+
+- Phase 3: Dish Library
+  - **3A — Data Layer:**
+    - Created `lib/zod/ingredient.ts` (IngredientSchema)
+    - Created `lib/zod/dish.ts` (DishSchema with Special/Breakfast refine, DishFilterSchema)
+    - Created `app/actions/ingredients.ts` (getIngredients, createIngredient with case-insensitive reuse, updateIngredient with collision guard, deleteIngredient with active-dish guard)
+    - Created `app/actions/dishes.ts` (getDishes, getDishById, createDish, updateDish with flavor dedupe, deleteDish soft-delete)
+    - Verified: typecheck ✓, build ✓
+  - **3B — Ingredient Management UI:**
+    - Installed shadcn: sheet, command, popover
+    - Created `components/ingredient-sheet.tsx` (slide-out drawer with add, inline rename, delete with AlertDialog confirmation)
+    - Created `components/ingredient-combobox.tsx` (searchable multi-select with chip display, "Manage Ingredients" opens sheet, auto-sync via onChange)
+    - Verified: typecheck ✓, build ✓
+  - **3C — Dish CRUD UI:**
+    - Installed shadcn: badge, select, dialog, alert-dialog
+    - Created `components/category-badge.tsx`, `components/flavor-tag.tsx`, `components/dish-card.tsx`
+    - Created `components/dish-dialog.tsx` (create/edit form with name, category, meal time, special toggle, flavors, ingredient combobox)
+    - Created `components/delete-dish-dialog.tsx` (confirmation dialog)
+    - Created `app/(dashboard)/dishes/dish-library.tsx` (responsive grid, category/meal time filters, debounced search)
+    - Created `app/(dashboard)/dishes/page.tsx` (server component wrapper)
+    - Created `app/(dashboard)/dishes/loading.tsx` (skeleton loader)
+    - Fixed pre-existing build error: wrapped sign-in form in Suspense boundary
+    - Verified: typecheck ✓, build ✓
 
 - Phase 2: Auth + Layout Shell
   - **2A — Auth Core:**
@@ -56,13 +79,44 @@ change.
 - **`Dish.category`**: `Category` enum (MAIN, SIDE, SOUP, SNACK, ACCOMPANIMENTS, OTHER) instead of freeform string
 - **Prisma 7**: uses `prisma.config.ts` for datasource URL instead of `url` in schema
 
+## Files Created in Phase 3
+
+- `lib/zod/dish.ts`, `lib/zod/ingredient.ts`
+- `app/actions/dishes.ts`, `app/actions/ingredients.ts`
+- `components/ingredient-sheet.tsx`, `components/ingredient-combobox.tsx`
+- `components/category-badge.tsx`, `components/flavor-tag.tsx`, `components/dish-card.tsx`
+- `components/dish-dialog.tsx`, `components/delete-dish-dialog.tsx`
+- `app/(dashboard)/dishes/page.tsx`, `dish-library.tsx`, `loading.tsx`
+- shadcn: badge, select, dialog, alert-dialog, sheet, command, popover, textarea, input-group
+
+## Bug Fixes
+
+- **Dish Library — pagination** (2026-06-28)
+  - Added `page` / `pageSize` fields to `DishFilterSchema` (Zod); both default and coerce.
+  - Updated `getDishes` to accept `page`/`pageSize`, run `prisma.dish.count` in parallel
+    with `findMany` (skip/take), and return `{ total, page, pageSize, totalPages }` alongside `dishes`.
+  - Updated `DishLibrary` client component: tracks `page` state; resets to 1 on any
+    filter/search change; renders a prev/next pagination bar + page-of-total counter
+    (hidden when ≤ 1 page); improved empty-state copy distinguishes "no dishes at all"
+    from "no matches for current filters".
+  - Updated `03-dish-library.md` (getDishes table, DishFilterSchema fields, acceptance
+    criteria, deferred-features section).
+  - Files changed: `lib/zod/dish.ts`, `app/actions/dishes.ts`,
+    `app/(dashboard)/dishes/dish-library.tsx`,
+    `.agents/context/features/03-dish-library.md`
+
+- **`IngredientCombobox` — selected badges disappear while searching** (2026-06-28)
+  - **Root cause**: `selectedIngredients` was derived from `ingredients` (the search-filtered API response), so any already-selected ingredient whose name didn't match the current query was excluded from the badge list.
+  - **Fix**: Added `allIngredientsRef` (`useRef<Map<string, Ingredient>>`), a cumulative cache merged from every `fetchIngredients` response. `selectedIngredients` is now resolved from this full cache via `useMemo`, making the badge list immune to the active search query.
+  - **File changed**: `components/ingredient-combobox.tsx`
+
 ## In Progress
 
-- None (Phase 2 complete)
+- None (Phase 3 complete)
 
 ## Next Up
 
-- Phase 3: Dish Library (CRUD, soft-delete, combobox ingredient input)
+- Phase 4: Meal Plan Generation (planner algorithm, generation UI)
 
 ## Open Questions
 
