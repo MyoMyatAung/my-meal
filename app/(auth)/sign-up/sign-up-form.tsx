@@ -22,28 +22,33 @@ export function SignUpForm() {
 
     const formData = new FormData(e.currentTarget)
 
-    const result = await signup(formData)
-    if (!result.success) {
-      setError(result.error)
-      if ("fieldErrors" in result && result.fieldErrors) {
-        setFieldErrors(result.fieldErrors)
+    try {
+      const result = await signup(formData)
+      if (!result.success) {
+        setError(result.error)
+        if ("fieldErrors" in result && result.fieldErrors) {
+          setFieldErrors(result.fieldErrors)
+        }
+        return
       }
+
+      const signInResult = await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirect: false,
+      })
+
+      if (signInResult?.error) {
+        router.push("/sign-in?created=1")
+        return
+      }
+
+      router.push("/")
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
       setPending(false)
-      return
     }
-
-    const signInResult = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirect: false,
-    })
-
-    if (signInResult?.error) {
-      router.push("/sign-in?created=1")
-      return
-    }
-
-    router.push("/")
   }
 
   return (

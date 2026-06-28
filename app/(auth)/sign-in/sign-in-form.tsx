@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,8 +11,10 @@ import { SignInSchema } from "@/lib/zod/auth"
 
 export function SignInForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/"
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -30,19 +33,23 @@ export function SignInForm() {
       return
     }
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        callbackUrl,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError("Invalid email or password")
+      if (result?.error) {
+        setError("Invalid email or password")
+        return
+      }
+
+      router.push(callbackUrl)
+    } finally {
       setPending(false)
-      return
     }
-
-    router.push("/")
   }
 
   return (

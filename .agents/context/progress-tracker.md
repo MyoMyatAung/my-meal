@@ -27,6 +27,7 @@ change.
     - Added `NEXTAUTH_SECRET`, `NEXTAUTH_URL` to `.env`
     - Created `types/next-auth.d.ts` (module augmentation for `Session.user.id`, `JWT.id`)
     - Created `lib/zod/auth.ts` (SignInSchema, SignUpSchema)
+    - Normalized sign-in/sign-up `name` and `email` inputs with `trim()` before validation in `lib/zod/auth.ts`
     - Created `lib/auth.ts` (Auth.js v4 config — Credentials provider, JWT callbacks, no adapter)
     - Created `app/api/auth/[...nextauth]/route.ts` (Auth.js route handler)
     - Created `app/actions/auth.ts` (signup Server Action — user creation only)

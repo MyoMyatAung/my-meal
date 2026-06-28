@@ -17,13 +17,16 @@ export const authOptions: NextAuthOptions = {
         const parsed = SignInSchema.safeParse(credentials)
         if (!parsed.success) return null
 
+        const email = parsed.data.email.toLowerCase()
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
+          where: { email },
         })
-        if (!user?.password) return null
 
-        const isValid = await bcrypt.compare(parsed.data.password, user.password)
-        if (!isValid) return null
+        const DUMMY_HASH = "$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        const passwordHash = user?.password ?? DUMMY_HASH
+        const isValid = await bcrypt.compare(parsed.data.password, passwordHash)
+
+        if (!user?.password || !isValid) return null
 
         return { id: user.id, name: user.name, email: user.email }
       },

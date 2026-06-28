@@ -14,7 +14,9 @@ export async function proxy(request: NextRequest) {
   })
 
   if (!token && !isPublicPath) {
-    return NextResponse.redirect(new URL("/sign-in", request.url))
+    const signInUrl = new URL("/sign-in", request.url)
+    signInUrl.searchParams.set("callbackUrl", request.url)
+    return NextResponse.redirect(signInUrl)
   }
 
   if (token && isPublicPath) {

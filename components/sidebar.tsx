@@ -39,12 +39,14 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const { resolvedTheme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [prevPathname, setPrevPathname] = useState(pathname)
+
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname)
+    setMobileOpen(false)
+  }
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
-
-  useEffect(() => {
-    closeMobile()
-  }, [pathname, closeMobile])
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -89,7 +91,7 @@ export function Sidebar({ user }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 bottom-0 z-40 flex w-54 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-200",
+          "fixed top-0 left-0 bottom-0 z-50 flex w-54 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-200",
           "max-md:top-0 max-md:bottom-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}

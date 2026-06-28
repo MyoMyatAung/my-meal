@@ -5,6 +5,12 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 type Theme = "light" | "dark" | "system"
 type ResolvedTheme = "light" | "dark"
 
+const THEMES: Theme[] = ["light", "dark", "system"]
+
+function isValidTheme(value: string): value is Theme {
+  return THEMES.includes(value as Theme)
+}
+
 interface ThemeContextValue {
   theme: Theme
   resolvedTheme: ResolvedTheme
@@ -25,17 +31,27 @@ function applyTheme(resolved: ResolvedTheme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system")
-  const [resolvedTheme, setResolved] = useState<ResolvedTheme>("light")
+  // Read initial state from localStorage safely during initialization to handle ssr
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "system"
+    const stored = localStorage.getItem("theme")
+    return stored && isValidTheme(stored) ? stored : "system"
+  })
 
+  const [resolvedTheme, setResolved] = useState<ResolvedTheme>(() => {
+    if (typeof window === "undefined") return "light"
+    const stored = localStorage.getItem("theme")
+    const initial = stored && isValidTheme(stored) ? stored : "system"
+    if (initial === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    }
+    return initial
+  })
+
+  // Apply theme class on mount to ensure synchronization
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null
-    const initial = stored ?? "system"
-    setThemeState(initial)
-    const resolved = initial === "system" ? getSystemTheme() : initial
-    setResolved(resolved)
-    applyTheme(resolved)
-  }, [])
+    applyTheme(resolvedTheme)
+  }, [resolvedTheme])
 
   useEffect(() => {
     if (theme !== "system") return

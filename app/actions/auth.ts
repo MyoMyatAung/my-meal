@@ -20,8 +20,10 @@ export async function signup(formData: FormData) {
     }
   }
 
+  const email = parsed.data.email.toLowerCase()
+
   const existing = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
+    where: { email },
   })
   if (existing) {
     return { success: false as const, error: "Email already in use" }
@@ -31,7 +33,7 @@ export async function signup(formData: FormData) {
 
   try {
     await prisma.user.create({
-      data: { name: parsed.data.name, email: parsed.data.email, password: hashed },
+      data: { name: parsed.data.name, email, password: hashed },
     })
   } catch (err) {
     if (
