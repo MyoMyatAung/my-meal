@@ -34,6 +34,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 
 **Deliverable:** Full dish library management (create, edit, archive dishes; manage ingredients inline).
 
+**Plan:** `.agents/context/features/03-dish-library.md`
+
 ---
 
 ## Phase 4 — Planner Core (Pure Logic, No UI)

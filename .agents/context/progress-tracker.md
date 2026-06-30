@@ -5,13 +5,24 @@ change.
 
 ## Current Phase
 
-- Phase 3 — Dish Library: Completed
+- Phase 4 — Planner Core: Completed
 
 ## Current Goal
 
-- Phase 4 — Meal Plan Generation (next)
+- Phase 5 — Plan Generation Server Action + UI (next)
 
 ## Completed
+
+- Phase 4: Planner Core (pure logic, no UI)
+  - Installed Vitest, created `vitest.config.ts`, added `test` script
+  - Created `lib/planner/types.ts` (PlannerDish, GenerationInput with `random?`, GenerationOutput, PlannerWarning)
+  - Created `lib/planner/gate.ts` (checkPreFlightGate — pure predicate, never throws)
+  - Created `lib/planner/rules.ts` (hasFlavorCollision, wouldRepeat, pickNonRepeatDish)
+  - Created `lib/planner/generate.ts` (generatePlan, PreFlightGateError, LUNCH_THREE_DISH_PROBABILITY)
+  - Created `lib/planner/fixtures.ts` (5 fixture libraries: tooSmall, noSpecial, singleFlavor, barelySufficient, normal)
+  - Created `lib/planner/generate.test.ts` (32 tests covering gate, special day, breakfast, lunch, shopping list, edge cases)
+  - Verified: all tests pass ✓, typecheck ✓, build ✓
+  - Fixed: special dish excluded from regular lunch candidates from start; weekend calculation uses actual startDate
 
 - Phase 1: Prisma schema, migration, and client singleton
   - Created `prisma/schema.prisma` with Auth.js models + domain models
@@ -89,6 +100,16 @@ change.
 - `app/(dashboard)/dishes/page.tsx`, `dish-library.tsx`, `loading.tsx`
 - shadcn: badge, select, dialog, alert-dialog, sheet, command, popover, textarea, input-group
 
+## Files Created in Phase 4
+
+- `lib/planner/types.ts` — PlannerDish, GenerationInput (incl. `random?`), GenerationOutput, PlannerWarning
+- `lib/planner/gate.ts` — Pre-flight gate check (pure predicate)
+- `lib/planner/rules.ts` — Flavor collision, repeat detection
+- `lib/planner/generate.ts` — Main generation algorithm + PreFlightGateError
+- `lib/planner/fixtures.ts` — 5 test fixture dish libraries
+- `lib/planner/generate.test.ts` — 32 unit tests
+- `vitest.config.ts` — Vitest configuration
+
 ## Bug Fixes
 
 - **Dish Library — pagination** (2026-06-28)
@@ -112,15 +133,15 @@ change.
 
 ## In Progress
 
-- None (Phase 3 complete)
+- None (Phase 4 complete)
 
 ## Next Up
 
-- Phase 4: Meal Plan Generation (planner algorithm, generation UI)
+- Phase 5: Plan Generation Server Action + UI
 
 ## Open Questions
 
-- None yet.
+- None.
 
 ## Architecture Decisions
 
