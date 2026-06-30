@@ -1,5 +1,8 @@
 import type { PlannerDish } from "./types"
 
+export const MIN_BREAKFAST_DISHES = 1
+export const MIN_LUNCH_DISHES = 2
+
 export interface GateResult {
   blocked: boolean
   errors: string[]
@@ -11,15 +14,15 @@ export function checkPreFlightGate(dishes: PlannerDish[]): GateResult {
 
   const errors: string[] = []
 
-  if (breakfastCount < 1) {
+  if (breakfastCount < MIN_BREAKFAST_DISHES) {
     errors.push(
-      `Not enough Breakfast dishes (need at least 1, have ${breakfastCount})`
+      `Not enough Breakfast dishes (need at least ${MIN_BREAKFAST_DISHES}, have ${breakfastCount})`
     )
   }
 
-  if (lunchCount < 2) {
+  if (lunchCount < MIN_LUNCH_DISHES) {
     errors.push(
-      `Not enough Lunch dishes (need at least 2, have ${lunchCount})`
+      `Not enough Lunch dishes (need at least ${MIN_LUNCH_DISHES}, have ${lunchCount})`
     )
   }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, afterEach } from "vitest"
 import { generatePlan, PreFlightGateError, LUNCH_THREE_DISH_PROBABILITY } from "./generate"
 import { checkPreFlightGate } from "./gate"
 import { hasFlavorCollision, wouldRepeat, pickNonRepeatDish } from "./rules"
@@ -28,7 +28,7 @@ function makeTestInput(
 ): GenerationInput {
   return {
     dishes,
-    startDate: startDate ?? new Date(2026, 0, 5),
+    startDate: startDate ?? new Date("2026-01-05T00:00:00.000Z"),
     durationDays,
     random,
   }
@@ -169,7 +169,7 @@ describe("Special Day placement", () => {
     const result = generatePlan(makeTestInput(normalLibrary, 14, random))
     const specials = getSpecialDayEntries(result)
     expect(specials).toHaveLength(1)
-    const dayOfWeek = specials[0].date.getDay()
+    const dayOfWeek = specials[0].date.getUTCDay()
     expect(dayOfWeek === 0 || dayOfWeek === 6).toBe(true)
   })
 
@@ -320,6 +320,53 @@ describe("Shopping list", () => {
       expect(item.dishName).toBeTruthy()
       expect(typeof item.dishName).toBe("string")
     }
+  })
+})
+
+describe("timezone safety", () => {
+  const originalTZ = process.env.TZ
+
+  afterEach(() => {
+    process.env.TZ = originalTZ
+  })
+
+  it("produces identical entry dates under UTC and a negative-offset timezone", () => {
+    const input = {
+      dishes: normalLibrary,
+      startDate: new Date("2026-01-01T00:00:00.000Z"),
+      durationDays: 14,
+      random: () => 0.5,
+    }
+
+    process.env.TZ = "UTC"
+    const outputUTC = generatePlan(input)
+
+    process.env.TZ = "America/New_York"
+    const outputNY = generatePlan(input)
+
+    expect(outputNY.entries.map((e) => e.date.toISOString())).toEqual(
+      outputUTC.entries.map((e) => e.date.toISOString())
+    )
+    expect(outputNY.warnings).toEqual(outputUTC.warnings)
+  })
+
+  it("places the special day on a UTC Saturday or Sunday even under a negative-offset timezone", () => {
+    process.env.TZ = "America/New_York"
+
+    const output = generatePlan({
+      dishes: normalLibrary,
+      startDate: new Date("2026-01-01T00:00:00.000Z"),
+      durationDays: 14,
+      random: () => 0,
+    })
+
+    const specialEntry = output.entries.find(
+      (e) => e.mealTime === "Lunch" && e.isSpecialDay
+    )
+
+    expect(specialEntry).toBeDefined()
+    const weekday = specialEntry!.date.getUTCDay()
+    expect([0, 6]).toContain(weekday)
   })
 })
 

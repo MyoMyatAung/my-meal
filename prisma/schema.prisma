@@ -130,6 +130,7 @@ model MealPlan {
   id            String              @id @default(cuid())
   startDate     DateTime
   endDate       DateTime
+  warnings      Json                @default("[]")
   userId        String
   user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   entries       MealPlanEntry[]
