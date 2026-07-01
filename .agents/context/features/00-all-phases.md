@@ -44,6 +44,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 
 **Deliverable:** Tested generation algorithm that enforces all balance rules.
 
+**Plan:** `.agents/context/features/04-planner-core.md`
+
 ---
 
 ## Phase 5 — Plan Generation + Dashboard
@@ -51,6 +53,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 **Goal:** Wire the planner algorithm to the database via Server Actions, build the Dashboard with plan generation and viewing.
 
 **Deliverable:** Generate plans from the dashboard, view them with day cards and dish pills.
+
+**Plan:** `.agents/context/features/05-plan-generation-and-dashboard.md`
 
 ---
 
