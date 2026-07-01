@@ -1,6 +1,6 @@
 import type { PlannerDish } from "./types"
 
-export function hasFlavorCollision(dishes: PlannerDish[]): boolean {
+export function hasFlavorCollision(dishes: { flavors: string[] }[]): boolean {
   const allFlavors = dishes.flatMap((d) => d.flavors)
   return allFlavors.length !== new Set(allFlavors).size
 }

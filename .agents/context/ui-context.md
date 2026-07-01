@@ -88,6 +88,10 @@ Notes:
   hand-style hover/focus states on custom CSS components. Default
   shadcn components manage their own hover/focus/disabled states
   internally.
+- Phase 6 warning surfaces (Dashboard blocking banner, plan warning
+  carousel cards, day-card warning indicators) use the existing
+  `destructive` token family. There is no separate `warning` token in
+  this project.
 
 ## Border Radius
 
@@ -99,6 +103,11 @@ open question. If a default shadcn component ever renders with
 visible rounding, it's getting that from somewhere other than these
 tokens (an inline style or a hardcoded class) and should be treated
 as a bug to fix, not a one-off override to accept.
+
+For Phase 6's warning carousel, the generated shadcn `carousel` nav
+buttons are expected to remain sharp-cornered under this global radius
+rule. Do not add `rounded-full` or any other `rounded-*` utility class
+to those controls.
 
 ## Typography
 
