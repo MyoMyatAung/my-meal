@@ -15,7 +15,7 @@ Update this file after every meaningful implementation change.
 - Phase 5: Plan Generation + Dashboard
   - **5A — Schema + Data Layer:**
     - Added `warnings Json @default("[]")` to `MealPlan` in Prisma schema
-    - Created migration `20260630000000_add_plan_warnings` (applied manually via Neon SQL)
+    - Created migration `20260630000000_add_plan_warnings` (applied via `prisma migrate deploy`)
     - Created `lib/utils/date.ts` (parseCalendarDate, formatCalendarDate, addDaysToCalendarDate — UTC-anchored)
     - Created `lib/zod/plan.ts` (GeneratePlanSchema)
     - Created `app/actions/plan.ts` (generatePlanAction, getCurrentPlan, getDishCounts)
@@ -191,6 +191,31 @@ Update this file after every meaningful implementation change.
     `TZ=America/New_York`, plus a UTC-weekend assertion for Special Day
     placement.
   - **File changed**: `lib/planner/generate.ts`, `lib/planner/generate.test.ts`
+
+- **Dashboard — server-local greeting timezone** (2026-07-01)
+  - **Root cause**: Dashboard greeting/date used `new Date()` in a server component, deriving time-of-day and formatted date from the server clock. Users in other timezones would see the wrong greeting and date.
+  - **Fix**: extracted greeting into `components/greeting-header.tsx` (client component) that uses the browser's `Date` via `useMemo`, so greeting and date reflect the user's local timezone.
+  - **File changed**: `components/greeting-header.tsx` (new), `app/(dashboard)/page.tsx`
+
+- **Generate plan form — UTC date default/min** (2026-07-01)
+  - **Root cause**: `getTodayStr()` in `components/generate-plan-form.tsx` used `getUTCFullYear/getUTCMonth/getUTCDate`, which for users ahead of UTC could yield tomorrow's date as the default and min for the date picker.
+  - **Fix**: switched to local-time methods (`getFullYear/getMonth/getDate`) since the component is `"use client"` and runs in the browser. Planner's UTC-safe logic untouched.
+  - **File changed**: `components/generate-plan-form.tsx`
+
+- **Generate plan form — invalid duration preview** (2026-07-01)
+  - **Root cause**: `durationValue` could become `0` or `NaN` when the number input is cleared, making `durationDays` invalid. `addDaysToCalendarDate` would receive bad input and the preview text would break.
+  - **Fix**: clamped `durationDays` to ≥ 1 via `Math.max(1, Math.floor(...) || 1)`, guarded preview text rendering with conditional.
+  - **File changed**: `components/generate-plan-form.tsx`
+
+- **Plan view — non-functional "View past plans" button** (2026-07-01)
+  - **Root cause**: "View past plans →" was a `<button>` with no `onClick` handler and no navigation target (no `/history` route exists). Styled with hover effects and arrow, implying interactivity.
+  - **Fix**: replaced with a static `<p>` reading "History coming soon" — no hover effect, no cursor, no arrow, clearly non-interactive.
+  - **File changed**: `components/plan-view.tsx`
+
+- **Plan schema — semantic date validation** (2026-07-01)
+  - **Root cause**: `startDate` in `GeneratePlanSchema` used a regex (`/^\d{4}-\d{2}-\d{2}$/`) that only checked format, not validity. Dates like `2026-02-30` would pass validation and fail later.
+  - **Fix**: switched to `z.iso.date()` (Zod v4) which validates both ISO format and semantic calendar correctness.
+  - **File changed**: `lib/zod/plan.ts`
 
 ## In Progress
 

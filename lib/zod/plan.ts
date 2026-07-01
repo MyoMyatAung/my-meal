@@ -1,9 +1,7 @@
 import { z } from "zod"
 
 export const GeneratePlanSchema = z.object({
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  startDate: z.iso.date("Date must be a valid YYYY-MM-DD date"),
   durationDays: z
     .number()
     .int()

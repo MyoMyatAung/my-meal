@@ -9,6 +9,7 @@ import {
   MIN_BREAKFAST_DISHES,
   MIN_LUNCH_DISHES,
 } from "@/lib/planner/gate"
+import { GreetingHeader } from "@/components/greeting-header"
 import {
   TriangleAlert,
   CalendarDays,
@@ -25,21 +26,6 @@ export default async function HomePage() {
     counts.breakfast < MIN_BREAKFAST_DISHES ||
     counts.lunch < MIN_LUNCH_DISHES
 
-  const now = new Date()
-  const greetingDate = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
-
-  const getGreeting = () => {
-    const hour = now.getHours()
-    if (hour < 12) return "Good morning"
-    if (hour < 18) return "Good afternoon"
-    return "Good evening"
-  }
-
   const planStartDate = plan
     ? formatCalendarDate(parseCalendarDate(plan.startDate.toISOString().slice(0, 10)), {
         month: "short",
@@ -55,10 +41,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <h1 className="text-lg font-semibold">
-        {getGreeting()}, {session?.user?.name}
-      </h1>
-      <p className="mb-6 text-sm text-muted-foreground">{greetingDate}</p>
+      <GreetingHeader name={session?.user?.name} />
 
       {isBlocked && (
         <Card className="mb-6 border-warning bg-warning/5">

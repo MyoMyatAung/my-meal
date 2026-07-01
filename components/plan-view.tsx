@@ -116,9 +116,9 @@ export function PlanView({ plan }: PlanViewProps) {
         </div>
       </div>
 
-      <button className="mb-4 text-sm text-muted-foreground hover:text-foreground">
-        View past plans →
-      </button>
+      <p className="mb-4 text-sm text-muted-foreground">
+        History coming soon
+      </p>
 
       {plan.warnings && plan.warnings.length > 0 && (
         <Card className="mb-6 border-warning bg-warning/5">

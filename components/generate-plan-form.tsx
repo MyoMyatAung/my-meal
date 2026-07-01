@@ -15,9 +15,9 @@ import { ArrowLeft, Loader2 } from "lucide-react"
 
 function getTodayStr(): string {
   const now = new Date()
-  const y = now.getUTCFullYear()
-  const m = String(now.getUTCMonth() + 1).padStart(2, "0")
-  const d = String(now.getUTCDate()).padStart(2, "0")
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, "0")
+  const d = String(now.getDate()).padStart(2, "0")
   return `${y}-${m}-${d}`
 }
 
@@ -29,9 +29,15 @@ export function GeneratePlanForm() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const durationDays = durationUnit === "Weeks" ? durationValue * 7 : durationValue
+  const durationDays = Math.max(
+    1,
+    Math.floor(durationUnit === "Weeks" ? durationValue * 7 : durationValue) || 1,
+  )
   const endDateStr = addDaysToCalendarDate(startDate, durationDays - 1)
-  const previewText = `This plan runs ${formatCalendarDate(parseCalendarDate(startDate), { month: "short", day: "numeric" })} to ${formatCalendarDate(parseCalendarDate(endDateStr), { month: "short", day: "numeric" })}.`
+  const previewText =
+    durationDays > 0
+      ? `This plan runs ${formatCalendarDate(parseCalendarDate(startDate), { month: "short", day: "numeric" })} to ${formatCalendarDate(parseCalendarDate(endDateStr), { month: "short", day: "numeric" })}.`
+      : null
 
   async function handleGenerate() {
     setIsGenerating(true)
@@ -109,7 +115,7 @@ export function GeneratePlanForm() {
             </p>
           </div>
 
-          <p className="text-sm text-muted-foreground">{previewText}</p>
+          {previewText && <p className="text-sm text-muted-foreground">{previewText}</p>}
         </CardContent>
       </Card>
 
