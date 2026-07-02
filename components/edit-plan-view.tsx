@@ -1,20 +1,15 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DayCard } from "@/components/day-card"
-import { GeneratePlanForm } from "@/components/generate-plan-form"
-import { formatCalendarDate, parseCalendarDate } from "@/lib/utils/date"
-import { buildWarningCards } from "@/lib/utils/warning-cards"
 import { PlanWarningsCarousel } from "@/components/plan-warnings-carousel"
+import { buildWarningCards } from "@/lib/utils/warning-cards"
 import { buildEntriesByDate, buildWeeksFromDateKeys } from "@/lib/utils/plan-grouping"
 
-interface PlanViewProps {
+interface EditPlanViewProps {
   plan: {
-    id: string
-    startDate: string
-    endDate: string
     warnings: { code: string; message: string }[] | string[]
     entries: {
       id: string
@@ -23,30 +18,24 @@ interface PlanViewProps {
       entryWarnings: string[]
       dishes: {
         id: string
+        sortOrder: number
         dish: {
           id: string
           name: string
-          category: string
           isSpecial: boolean
         }
-        sortOrder: number
       }[]
     }[]
   }
+  breakfastOptions: { id: string; name: string; isSpecial: boolean }[]
+  lunchOptions: { id: string; name: string; isSpecial: boolean }[]
 }
 
-export function PlanView({ plan }: PlanViewProps) {
-  const [showGenerate, setShowGenerate] = useState(false)
-
-  if (showGenerate) {
-    return <GeneratePlanForm />
-  }
-
-  const startDate = parseCalendarDate(plan.startDate.slice(0, 10))
-  const endDate = parseCalendarDate(plan.endDate.slice(0, 10))
-
-  const dateRange = `${formatCalendarDate(startDate, { month: "short", day: "numeric" })} – ${formatCalendarDate(endDate, { month: "short", day: "numeric" })}`
-
+export function EditPlanView({
+  plan,
+  breakfastOptions,
+  lunchOptions,
+}: EditPlanViewProps) {
   const entriesByDate = buildEntriesByDate(plan.entries)
   const weeks = buildWeeksFromDateKeys(Array.from(entriesByDate.keys()))
 
@@ -64,28 +53,29 @@ export function PlanView({ plan }: PlanViewProps) {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold">{dateRange}</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowGenerate(true)}>
-            Generate New Plan
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/plan/edit">Edit plan</Link>
-          </Button>
-        </div>
+      <div className="mb-4">
+        <Link
+          href="/plan"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="size-3.5" />
+          Plan view
+        </Link>
       </div>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        History coming soon
-      </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold">Edit plan</h1>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/plan">Done</Link>
+        </Button>
+      </div>
 
       <PlanWarningsCarousel warnings={warningCards} />
 
       {weeks.map((week) => (
         <div key={week.label} className="mb-6">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            ── {week.label} ──
+            -- {week.label} --
           </h2>
           <div className="space-y-3">
             {week.dates.map((dateKey) => {
@@ -93,11 +83,16 @@ export function PlanView({ plan }: PlanViewProps) {
               return (
                 <DayCard
                   key={dateKey}
-                  date={parseCalendarDate(dateKey)}
+                  date={new Date(`${dateKey}T00:00:00.000Z`)}
                   breakfast={day.breakfast}
                   lunch={day.lunch}
                   isSpecialDay={day.isSpecialDay}
                   warnings={day.warnings}
+                  editable
+                  swappableDishes={{
+                    Breakfast: breakfastOptions,
+                    Lunch: lunchOptions,
+                  }}
                 />
               )
             })}

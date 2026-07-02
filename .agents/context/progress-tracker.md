@@ -4,13 +4,38 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 5 — Plan Generation + Dashboard: Completed
+- Phase 6 — Plan Editing + Shopping List: Completed
 
 ## Current Goal
 
-- Phase 6 — Plan Editing (next)
+- Phase 7 — History + Account Settings + Polish (next)
 
 ## Completed
+
+- Phase 6: Plan Editing + Shopping List
+  - **6A — Data layer + rule reuse:**
+    - Widened `hasFlavorCollision` input to `{ flavors: string[] }[]` in `lib/planner/rules.ts`
+    - Added `lib/planner/edit-warnings.ts` + `edit-warnings.test.ts` for live per-entry warning computation
+    - Extended `getCurrentPlan` in `app/actions/plan.ts` with dish flavor loading and computed `entryWarnings`
+    - Added `SwapDishSchema` in `lib/zod/plan.ts`
+    - Added `lib/utils/shopping-list-diff.ts` + test and wired transactional shopping-list sync into `swapDishAction`
+    - Added `getSwappableDishes` and `swapDishAction` in `app/actions/plan.ts`
+    - Added `lib/zod/shopping-list.ts` and `app/actions/shopping-list.ts` (`getCurrentShoppingList`, `toggleShoppingItemAction`)
+  - **6B — Plan editing UI:**
+    - Installed shadcn components: `carousel`, `sonner`
+    - Added `lib/utils/warning-cards.ts` + test
+    - Added `components/plan-warnings-carousel.tsx`
+    - Enabled Edit flow in `components/plan-view.tsx` and removed old generation banner in favor of consolidated carousel
+    - Added `components/editable-dish-pill.tsx` (swap + toast error handling)
+    - Updated `components/day-card.tsx` to support editable mode and warning indicator styling
+    - Added `components/edit-plan-view.tsx` and `app/(dashboard)/plan/edit/page.tsx`
+    - Fixed Dashboard blocking banner color tokens in `app/(dashboard)/page.tsx` (`destructive` tokens)
+    - Mounted global toaster in `app/layout.tsx`
+  - **6C — Shopping list UI:**
+    - Installed shadcn component: `checkbox`
+    - Added `components/shopping-list-view.tsx` (optimistic toggle + revert + toast on failure)
+    - Added `app/(dashboard)/shopping-list/page.tsx`
+  - Verified: typecheck ✓, build ✓, vitest ✓ (46 tests)
 
 - Phase 5: Plan Generation + Dashboard
   - **5A — Schema + Data Layer:**
@@ -217,13 +242,18 @@ Update this file after every meaningful implementation change.
   - **Fix**: switched to `z.iso.date()` (Zod v4) which validates both ISO format and semantic calendar correctness.
   - **File changed**: `lib/zod/plan.ts`
 
+- **Plan edit swap — selected dish not applied** (2026-07-01)
+  - **Root cause**: `EditableDishPill` controlled the shadcn/Radix `Select` with `open` + `onOpenChange={setEditing}` while also unmounting the component when edit mode closes. On selection, close events could end edit mode before value-change mutation handling completed reliably.
+  - **Fix**: switched to `defaultOpen` (uncontrolled open state), removed the debug `console.log`, and kept edit-mode teardown in `onOpenChange` only when the popover fully closes.
+  - **File changed**: `components/editable-dish-pill.tsx`
+
 ## In Progress
 
-- None (Phase 5 complete)
+- None (Phase 6 complete)
 
 ## Next Up
 
-- Phase 6: Plan Editing
+- Phase 7: History + Account settings + polish
 
 ## Open Questions
 

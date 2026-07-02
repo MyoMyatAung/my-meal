@@ -3,11 +3,16 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { GeneratePlanSchema } from "@/lib/zod/plan"
+import { GeneratePlanSchema, SwapDishSchema } from "@/lib/zod/plan"
 import { Prisma } from "@prisma/client"
 import { generatePlan, PreFlightGateError } from "@/lib/planner/generate"
 import type { PlannerDish } from "@/lib/planner/types"
 import { parseCalendarDate } from "@/lib/utils/date"
+import {
+  computeEntryWarnings,
+  type WarningEntry,
+} from "@/lib/planner/edit-warnings"
+import { diffShoppingList } from "@/lib/utils/shopping-list-diff"
 
 async function getUserId() {
   const session = await getServerSession(authOptions)
@@ -141,7 +146,15 @@ export async function getCurrentPlan() {
           dishes: {
             include: {
               dish: {
-                select: { id: true, name: true, category: true, isSpecial: true },
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                  isSpecial: true,
+                  flavors: {
+                    select: { flavor: { select: { name: true } } },
+                  },
+                },
               },
             },
             orderBy: { sortOrder: "asc" },
@@ -155,7 +168,167 @@ export async function getCurrentPlan() {
     },
   })
 
-  return plan
+  if (!plan) return null
+
+  const warningInput: WarningEntry[] = plan.entries.map((entry) => ({
+    entryId: entry.id,
+    mealTime: entry.mealTime,
+    dishes: entry.dishes.map((entryDish) => ({
+      dishId: entryDish.dish.id,
+      dishName: entryDish.dish.name,
+      flavors: entryDish.dish.flavors.map((flavorLink) => flavorLink.flavor.name),
+    })),
+  }))
+
+  const warningsByEntry = computeEntryWarnings(warningInput)
+
+  return {
+    ...plan,
+    entries: plan.entries.map((entry) => ({
+      ...entry,
+      entryWarnings: warningsByEntry.get(entry.id) ?? [],
+    })),
+  }
+}
+
+export async function getSwappableDishes(mealTime: "Breakfast" | "Lunch") {
+  try {
+    const userId = await getUserId()
+    const dishes = await prisma.dish.findMany({
+      where: { userId, isArchived: false, mealTime },
+      select: {
+        id: true,
+        name: true,
+        isSpecial: true,
+      },
+      orderBy: { name: "asc" },
+    })
+
+    return { success: true as const, data: { dishes } }
+  } catch {
+    return { success: false as const, error: "Failed to fetch dishes" }
+  }
+}
+
+export async function swapDishAction(input: {
+  entryDishId: string
+  newDishId: string
+}) {
+  try {
+    const userId = await getUserId()
+
+    const parsed = SwapDishSchema.safeParse(input)
+    if (!parsed.success) {
+      return { success: false as const, error: "Invalid swap request" }
+    }
+
+    const entryDish = await prisma.mealPlanEntryDish.findFirst({
+      where: {
+        id: parsed.data.entryDishId,
+        entry: { mealPlan: { userId } },
+      },
+      include: {
+        entry: {
+          include: {
+            dishes: true,
+          },
+        },
+      },
+    })
+
+    if (!entryDish) {
+      return { success: false as const, error: "Slot not found" }
+    }
+
+    const newDish = await prisma.dish.findFirst({
+      where: {
+        id: parsed.data.newDishId,
+        userId,
+        isArchived: false,
+      },
+    })
+
+    if (!newDish) {
+      return { success: false as const, error: "Dish not found" }
+    }
+
+    if (newDish.mealTime !== entryDish.entry.mealTime) {
+      return {
+        success: false as const,
+        error: "Dish must match this slot's meal time",
+      }
+    }
+
+    const alreadyInEntry = entryDish.entry.dishes.some(
+      (dish) => dish.id !== entryDish.id && dish.dishId === newDish.id
+    )
+
+    if (alreadyInEntry) {
+      return { success: false as const, error: "That dish is already in this meal" }
+    }
+
+    const mealPlanId = entryDish.entry.mealPlanId
+
+    await prisma.$transaction(async (tx) => {
+      await tx.mealPlanEntryDish.update({
+        where: { id: entryDish.id },
+        data: { dishId: newDish.id },
+      })
+
+      const allEntryDishes = await tx.mealPlanEntryDish.findMany({
+        where: { entry: { mealPlanId } },
+        select: { dishId: true },
+      })
+
+      const currentDishIds = [...new Set(allEntryDishes.map((dish) => dish.dishId))]
+
+      const dishesWithIngredients = await tx.dish.findMany({
+        where: { id: { in: currentDishIds } },
+        select: {
+          ingredients: {
+            select: { ingredientId: true },
+          },
+        },
+      })
+
+      const requiredIngredientIds = new Set(
+        dishesWithIngredients.flatMap((dish) =>
+          dish.ingredients.map((ingredient) => ingredient.ingredientId)
+        )
+      )
+
+      const existingItems = await tx.shoppingListItem.findMany({
+        where: { mealPlanId },
+        select: { id: true, ingredientId: true },
+      })
+
+      const { toCreateIngredientIds, toDeleteItemIds } = diffShoppingList(
+        requiredIngredientIds,
+        existingItems
+      )
+
+      if (toDeleteItemIds.length > 0) {
+        await tx.shoppingListItem.deleteMany({
+          where: { id: { in: toDeleteItemIds } },
+        })
+      }
+
+      if (toCreateIngredientIds.length > 0) {
+        await tx.shoppingListItem.createMany({
+          data: toCreateIngredientIds.map((ingredientId) => ({
+            mealPlanId,
+            ingredientId,
+            isChecked: false,
+            dishName: newDish.name,
+          })),
+        })
+      }
+    })
+
+    return { success: true as const, data: { entryDishId: entryDish.id } }
+  } catch {
+    return { success: false as const, error: "Failed to swap dish" }
+  }
 }
 
 export async function getDishCounts() {

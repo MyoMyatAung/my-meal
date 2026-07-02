@@ -68,11 +68,12 @@
    `My MealEntryDish` referencing an archived dish must continue to
    resolve and render correctly in Plan History — never a broken or
    missing reference.
-3. A plan's shopping list is a snapshot taken at generation time
-   (`ShoppingListItem` rows tied to that `My Meal`), not a live
-   recomputation from the current dish library. Editing or archiving
-   a dish later must never retroactively change a past plan's
-   shopping list.
+3. A plan's shopping list always reflects that plan's current dish
+  assignment (`ShoppingListItem` rows tied to that `My Meal`).
+  Generation creates the initial set, and manual slot swaps update
+  it transactionally with the dish change. Ingredient rows still
+  required by any dish in the plan keep their checked state; rows no
+  longer required anywhere in the plan are deleted.
 4. Plan generation (and regeneration) writes its `My Meal`, all of
    its `My MealEntry` / `My MealEntryDish` rows, and its
    `ShoppingListItem` rows as a single Prisma transaction. A failure

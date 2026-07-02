@@ -44,9 +44,9 @@ export default async function HomePage() {
       <GreetingHeader name={session?.user?.name} />
 
       {isBlocked && (
-        <Card className="mb-6 border-warning bg-warning/5">
+        <Card className="mb-6 border-destructive/40 bg-destructive/5">
           <CardContent className="flex items-start gap-3 p-4">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
             <div>
               <p className="text-sm">
                 You need at least {MIN_BREAKFAST_DISHES} Breakfast dish and{" "}

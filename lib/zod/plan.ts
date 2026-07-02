@@ -11,3 +11,10 @@ export const GeneratePlanSchema = z.object({
 })
 
 export type GeneratePlanInput = z.infer<typeof GeneratePlanSchema>
+
+export const SwapDishSchema = z.object({
+  entryDishId: z.string().min(1),
+  newDishId: z.string().min(1),
+})
+
+export type SwapDishInput = z.infer<typeof SwapDishSchema>
