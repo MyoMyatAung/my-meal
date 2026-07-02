@@ -134,12 +134,13 @@ export async function generatePlanAction({
   }
 }
 
-export async function getCurrentPlan() {
-  const userId = await getUserId()
-
+async function findPlanWithWarnings(
+  where: Prisma.MealPlanWhereInput,
+  orderBy?: Prisma.MealPlanOrderByWithRelationInput
+) {
   const plan = await prisma.mealPlan.findFirst({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
+    where,
+    orderBy,
     include: {
       entries: {
         include: {
@@ -189,6 +190,44 @@ export async function getCurrentPlan() {
       entryWarnings: warningsByEntry.get(entry.id) ?? [],
     })),
   }
+}
+
+export async function getCurrentPlan() {
+  const userId = await getUserId()
+  return findPlanWithWarnings({ userId }, { createdAt: "desc" })
+}
+
+export async function getPlanById(planId: string) {
+  const userId = await getUserId()
+  return findPlanWithWarnings({ id: planId, userId })
+}
+
+export async function getPlanHistory() {
+  const userId = await getUserId()
+
+  const plans = await prisma.mealPlan.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      startDate: true,
+      endDate: true,
+      _count: { select: { shoppingItems: true } },
+    },
+  })
+
+  // Index 0 is "the current plan" — same definition getCurrentPlan() uses.
+  // Everything after it is history.
+  return plans.slice(1).map((plan) => ({
+    id: plan.id,
+    startDate: plan.startDate,
+    endDate: plan.endDate,
+    dayCount:
+      Math.round(
+        (plan.endDate.getTime() - plan.startDate.getTime()) / 86_400_000
+      ) + 1,
+    ingredientCount: plan._count.shoppingItems,
+  }))
 }
 
 export async function getSwappableDishes(mealTime: "Breakfast" | "Lunch") {

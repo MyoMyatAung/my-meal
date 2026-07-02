@@ -4,13 +4,56 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 6 — Plan Editing + Shopping List: Completed
+- Phase 7 — History + Account Settings + Polish: Completed
 
 ## Current Goal
 
-- Phase 7 — History + Account Settings + Polish (next)
+- None — all planned phases (1–7) complete.
 
 ## Completed
+
+- Phase 7: History + Account Settings + Polish
+  - **7A — History data layer:**
+    - Refactored `getCurrentPlan` in `app/actions/plan.ts` into a shared
+      private `findPlanWithWarnings(where, orderBy?)` helper
+    - Added `getPlanById(planId)` (scoped to `{ id, userId }`) and
+      `getPlanHistory()` (all plans except the most-recently-created
+      one, newest first, with computed `dayCount`/`ingredientCount`)
+  - **7B — History UI:**
+    - Replaced the dead "History coming soon" placeholder in
+      `components/plan-view.tsx` with a real `/history` link
+    - Added `app/(dashboard)/history/page.tsx` (list, empty state)
+    - Added `app/(dashboard)/history/[planId]/page.tsx` (read-only
+      detail view, `redirect("/history")` on unknown/foreign id)
+  - **7C — Account settings data layer:**
+    - Extracted `PasswordSchema` in `lib/zod/auth.ts`, reused by
+      `SignUpSchema`
+    - Added `lib/zod/settings.ts` (`UpdateNameSchema`,
+      `UpdatePasswordSchema`)
+    - Added `app/actions/settings.ts` (`updateNameAction`,
+      `updatePasswordAction` — bcrypt-verifies current password before
+      accepting a new one)
+  - **7D — Account settings UI + session sync:**
+    - Added `components/session-provider.tsx` (`"use client"` re-export
+      wrapper) and mounted it in `app/layout.tsx` — a bare `"use client"`
+      import of `next-auth/react`'s `SessionProvider` directly in a
+      Server Component broke static generation (`next-auth` v4's
+      `react/index.js` ships with no `"use client"` directive of its
+      own); the wrapper file fixes this the same way
+      `components/theme-provider.tsx` already wraps `next-themes`
+    - Extended `lib/auth.ts`'s `jwt` callback with a
+      `trigger === "update"` branch
+    - Added `app/(dashboard)/settings/page.tsx`,
+      `components/update-name-form.tsx` (calls `useSession().update()` +
+      `router.refresh()`), `components/update-password-form.tsx`,
+      `components/sign-out-button.tsx`
+    - Added "Settings" nav entry to `components/sidebar.tsx`
+  - Verified: typecheck ✓, build ✓, vitest ✓ (46 tests, unaffected),
+    full manual browser walkthrough (sign-up → generate 2 plans →
+    archive a dish referenced in the older plan → history list/detail →
+    unknown-id redirect → name change with live sidebar sync → wrong/
+    weak/mismatched password rejections → successful password change →
+    sign-out → sign-in with new password, old password rejected)
 
 - Phase 6: Plan Editing + Shopping List
   - **6A — Data layer + rule reuse:**
@@ -161,6 +204,24 @@ Update this file after every meaningful implementation change.
 - `components/dish-pill.tsx` — Badge showing dish name + optional star
 - `app/(dashboard)/page.tsx` (rewritten — Dashboard with greeting, banner, summary, links)
 
+## Files Created in Phase 7
+
+- `app/actions/plan.ts` (modified — extracted `findPlanWithWarnings`; added `getPlanById`, `getPlanHistory`)
+- `components/plan-view.tsx` (modified — real `/history` link instead of placeholder text)
+- `app/(dashboard)/history/page.tsx` — history list (cards, empty state)
+- `app/(dashboard)/history/[planId]/page.tsx` — read-only plan detail view
+- `lib/zod/auth.ts` (modified — extracted `PasswordSchema`)
+- `lib/zod/settings.ts` — `UpdateNameSchema`, `UpdatePasswordSchema`
+- `app/actions/settings.ts` — `updateNameAction`, `updatePasswordAction`
+- `components/session-provider.tsx` — `"use client"` wrapper for `next-auth/react`'s `SessionProvider`
+- `app/layout.tsx` (modified — mounted `SessionProvider`)
+- `lib/auth.ts` (modified — `jwt` callback handles `trigger === "update"`)
+- `app/(dashboard)/settings/page.tsx` — Account settings page
+- `components/update-name-form.tsx` — Profile name form with session sync
+- `components/update-password-form.tsx` — Password change form
+- `components/sign-out-button.tsx` — Settings-page sign-out button
+- `components/sidebar.tsx` (modified — added "Settings" nav entry)
+
 ## Files Created in Phase 4
 
 - `lib/planner/types.ts` — PlannerDish, GenerationInput (incl. `random?`), GenerationOutput, PlannerWarning
@@ -247,13 +308,44 @@ Update this file after every meaningful implementation change.
   - **Fix**: switched to `defaultOpen` (uncontrolled open state), removed the debug `console.log`, and kept edit-mode teardown in `onOpenChange` only when the popover fully closes.
   - **File changed**: `components/editable-dish-pill.tsx`
 
+- **History detail page — crash rendering plan-level warnings** (2026-07-02)
+  - **Root cause**: `MealPlan.warnings` is stored as `{ code, message }[]`
+    (see `generatePlanAction`), but the new
+    `app/(dashboard)/history/[planId]/page.tsx` cast it straight to
+    `string[]` and passed the raw objects into `buildWarningCards` →
+    React tried to render `{code, message}` objects as JSX children,
+    crashing the page ("Objects are not valid as a React child").
+    `components/plan-view.tsx` already had the correct
+    `typeof warning === "string" ? warning : warning.message` mapping;
+    the history page was written without reusing it. Caught during
+    manual browser verification, not by typecheck (the cast suppressed
+    the type error) or by vitest (no test covers page-level rendering).
+  - **Fix**: applied the same string/object normalization used in
+    `plan-view.tsx` before passing warnings into `buildWarningCards`.
+  - **File changed**: `app/(dashboard)/history/[planId]/page.tsx`
+
+- **SessionProvider breaking static generation** (2026-07-02)
+  - **Root cause**: `next-auth` v4's `react/index.js` has no
+    `"use client"` directive. Importing `SessionProvider` directly into
+    `app/layout.tsx` (a Server Component) and rendering it built fine
+    under `next dev` but failed `next build`'s static generation of
+    `/_not-found` with "React Context is unavailable in Server
+    Components."
+  - **Fix**: added `components/session-provider.tsx`, a one-line
+    `"use client"` re-export of `SessionProvider` — the same wrapper
+    pattern `components/theme-provider.tsx` already uses for
+    `next-themes`. `app/layout.tsx` imports from the wrapper instead of
+    `next-auth/react` directly.
+  - **File changed**: `components/session-provider.tsx` (new),
+    `app/layout.tsx`
+
 ## In Progress
 
-- None (Phase 6 complete)
+- None (Phase 7 complete — all planned phases done)
 
 ## Next Up
 
-- Phase 7: History + Account settings + polish
+- None planned.
 
 ## Open Questions
 

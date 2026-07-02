@@ -64,6 +64,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 
 **Deliverable:** Edit plan slots, see warnings on rule violations, check off shopping items.
 
+**Plan:** `.agents/context/features/06-plan-editing-and-shopping-list.md`
+
 ---
 
 ## Phase 7 — History + Account Settings + Polish
@@ -71,6 +73,8 @@ Incremental build of "My Meal" — a weekly meal planner and shopping list web a
 **Goal:** Complete the app with plan history browsing, account settings, and the dashboard blocking banner.
 
 **Deliverable:** Full app with all features working end to end.
+
+**Plan:** `.agents/context/features/07-history-account-settings-polish.md`
 
 ---
 
