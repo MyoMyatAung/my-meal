@@ -11,6 +11,7 @@ import {
   Utensils,
   ShoppingCart,
   History,
+  Settings,
   Sun,
   Moon,
   Menu,
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Dishes", href: "/dishes", icon: Utensils },
   { label: "Shopping list", href: "/shopping-list", icon: ShoppingCart },
   { label: "History", href: "/history", icon: History },
+  { label: "Settings", href: "/settings", icon: Settings },
 ]
 
 interface SidebarProps {

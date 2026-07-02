@@ -168,17 +168,27 @@ primitives suggest — these are intent, not spec.
 **Lucide** via `lucide-react` — unaffected by the theme change, and
 already the icon set shadcn's own ecosystem expects. Same icon names
 already in use from the prototype apply: `layout-dashboard`,
-`calendar-days`, `utensils`, `shopping-cart`, `history`, `sun`, `moon`,
-`menu`, `plus`, `x`, `star`, `refresh-cw`, `pencil`, `trash-2`,
-`chevron-left`, `chevron-right`, `check`, `triangle-alert`, `lock`,
-`mail`.
+`calendar-days`, `utensils`, `shopping-cart`, `history`, `settings`,
+`sun`, `moon`, `menu`, `plus`, `x`, `star`, `refresh-cw`, `pencil`,
+`trash-2`, `chevron-left`, `chevron-right`, `check`, `triangle-alert`,
+`lock`, `mail`, `log-out`, `arrow-left`, `calendar`.
+
+(`settings`, `log-out`, `arrow-left`, `calendar` added in Phase 7 for
+the Settings nav entry/sign-out affordance and the History list/detail
+pages — none in the prototype's original icon set.)
 
 ## Open UI States Not Yet Designed
 
-Unaffected by this change — still no visual reference for either of
-these, per `meal-planner-spec.md` §6:
-
-- **Account settings page** (change name, change password, sign out).
 - **Dashboard "not enough dishes" blocking banner** — the message
   shown when generation is blocked by the hard pre-flight gate (see
-  `architecture.md` Invariant 6).
+  `architecture.md` Invariant 6). Still unaffected by this change, no
+  visual reference exists per `meal-planner-spec.md` §6.
+
+Resolved in Phase 7:
+
+- **Account settings page** (change name, change password, sign out) —
+  built as two stacked `Card`s ("Profile", "Password") plus an outline
+  "Sign out" button, single-column, same max-width container as every
+  other dashboard page. See
+  `.agents/context/features/07-history-account-settings-polish.md` for
+  the layout decision and rationale.

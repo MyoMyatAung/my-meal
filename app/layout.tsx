@@ -1,6 +1,7 @@
 import { Geist_Mono, Inter } from "next/font/google"
 
 import "./globals.css"
+import { SessionProvider } from "@/components/session-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
@@ -24,10 +25,12 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
       <body suppressHydrationWarning>
-        <ThemeProvider>
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   )

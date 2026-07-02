@@ -76,9 +76,12 @@ export function PlanView({ plan }: PlanViewProps) {
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        History coming soon
-      </p>
+      <Link
+        href="/history"
+        className="mb-4 inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+      >
+        View past plans →
+      </Link>
 
       <PlanWarningsCarousel warnings={warningCards} />
 
