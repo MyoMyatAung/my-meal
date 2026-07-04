@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { IngredientCombobox } from "@/components/ingredient-combobox"
+import { DishPairingCombobox } from "@/components/dish-pairing-combobox"
 
 interface DishDialogProps {
   open: boolean
@@ -54,6 +55,7 @@ export function DishDialog({
   const [isSpecial, setIsSpecial] = useState(false)
   const [flavors, setFlavors] = useState<string[]>([])
   const [ingredientIds, setIngredientIds] = useState<string[]>([])
+  const [pairedDishIds, setPairedDishIds] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
 
@@ -66,6 +68,7 @@ export function DishDialog({
         setIsSpecial(dish.isSpecial)
         setFlavors(dish.flavors.map((f) => f.flavor.name))
         setIngredientIds(dish.ingredients.map((i) => i.ingredient.id))
+        setPairedDishIds(dish.pairedDishes.map((d) => d.id))
       } else {
         setName("")
         setCategory(Category.MAIN)
@@ -73,6 +76,7 @@ export function DishDialog({
         setIsSpecial(false)
         setFlavors([])
         setIngredientIds([])
+        setPairedDishIds([])
       }
       setErrors({})
     }
@@ -84,6 +88,12 @@ export function DishDialog({
     }
   }, [mealTime, isSpecial])
 
+  useEffect(() => {
+    if (mealTime === MealTime.Breakfast && pairedDishIds.length > 0) {
+      setPairedDishIds([])
+    }
+  }, [mealTime, pairedDishIds])
+
   async function handleSubmit() {
     const parsed = DishSchema.safeParse({
       name,
@@ -92,6 +102,7 @@ export function DishDialog({
       isSpecial,
       flavors,
       ingredientIds,
+      pairedDishIds,
     })
 
     if (!parsed.success) {
@@ -244,6 +255,24 @@ export function DishDialog({
               </p>
             )}
           </div>
+
+          {mealTime === MealTime.Lunch && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium">
+                Paired with (Lunch dishes)
+              </label>
+              <DishPairingCombobox
+                selectedIds={pairedDishIds}
+                onChange={setPairedDishIds}
+                excludeDishId={dish?.id}
+              />
+              {errors.pairedDishIds && (
+                <p className="text-xs text-destructive">
+                  {errors.pairedDishIds}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>

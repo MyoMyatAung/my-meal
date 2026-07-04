@@ -1,19 +1,48 @@
 "use server"
 
-import { Prisma } from "@prisma/client"
+import { Prisma, type Category } from "@prisma/client"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { DishSchema, DishFilterSchema } from "@/lib/zod/dish"
 
-export type DishWithRelations = Prisma.DishGetPayload<{
-  include: {
-    flavors: { select: { id: true; flavor: { select: { id: true; name: true } } } }
-    ingredients: {
-      select: { id: true; ingredient: { select: { id: true; name: true } } }
-    }
+const dishInclude = {
+  flavors: { select: { id: true, flavor: { select: { id: true, name: true } } } },
+  ingredients: {
+    select: {
+      id: true,
+      ingredient: { select: { id: true, name: true } },
+    },
+  },
+  pairingsAsA: {
+    select: { dishB: { select: { id: true, name: true, category: true } } },
+  },
+  pairingsAsB: {
+    select: { dishA: { select: { id: true, name: true, category: true } } },
+  },
+} satisfies Prisma.DishInclude
+
+type DishWithRawPairings = Prisma.DishGetPayload<{ include: typeof dishInclude }>
+
+export type DishWithRelations = Omit<
+  DishWithRawPairings,
+  "pairingsAsA" | "pairingsAsB"
+> & {
+  pairedDishes: { id: string; name: string; category: Category }[]
+}
+
+function withPairedDishes(dish: DishWithRawPairings): DishWithRelations {
+  const { pairingsAsA, pairingsAsB, ...rest } = dish
+  return {
+    ...rest,
+    pairedDishes: [
+      ...pairingsAsA.map((p) => p.dishB),
+      ...pairingsAsB.map((p) => p.dishA),
+    ],
   }
-}>
+}
+
+class PairingValidationError extends Error {}
 
 async function getUserId() {
   const session = await getServerSession(authOptions)
@@ -34,6 +63,65 @@ function dedupeFlavorsCaseInsensitive(flavors: string[]): string[] {
     }
   }
   return result
+}
+
+/**
+ * Symmetric pairing sync: one canonical DishPairing row per unordered pair
+ * (dishAId < dishBId), diffed against the dish's desired pairing set.
+ * Rejects any target that isn't the user's own, Lunch-only dish.
+ */
+async function syncDishPairings(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  dishId: string,
+  targetIds: string[],
+): Promise<void> {
+  const uniqueTargetIds = [...new Set(targetIds)].filter((id) => id !== dishId)
+
+  if (uniqueTargetIds.length > 0) {
+    const validTargets = await tx.dish.findMany({
+      where: { id: { in: uniqueTargetIds }, userId, mealTime: "Lunch" },
+      select: { id: true },
+    })
+    if (validTargets.length !== uniqueTargetIds.length) {
+      throw new PairingValidationError("One or more paired dishes are invalid")
+    }
+  }
+
+  const existing = await tx.dishPairing.findMany({
+    where: { OR: [{ dishAId: dishId }, { dishBId: dishId }] },
+  })
+
+  const existingOtherIds = new Map(
+    existing.map((row) => [
+      row.dishAId === dishId ? row.dishBId : row.dishAId,
+      row.id,
+    ]),
+  )
+
+  const desiredSet = new Set(uniqueTargetIds)
+
+  const toDeleteIds = existing
+    .filter((row) => {
+      const otherId = row.dishAId === dishId ? row.dishBId : row.dishAId
+      return !desiredSet.has(otherId)
+    })
+    .map((row) => row.id)
+
+  const toCreateIds = uniqueTargetIds.filter((id) => !existingOtherIds.has(id))
+
+  if (toDeleteIds.length > 0) {
+    await tx.dishPairing.deleteMany({ where: { id: { in: toDeleteIds } } })
+  }
+
+  if (toCreateIds.length > 0) {
+    await tx.dishPairing.createMany({
+      data: toCreateIds.map((targetId) => {
+        const [dishAId, dishBId] = [dishId, targetId].sort()
+        return { dishAId, dishBId }
+      }),
+    })
+  }
 }
 
 export async function getFlavors(search?: string) {
@@ -103,15 +191,7 @@ export async function getDishes(filters?: {
       prisma.dish.count({ where }),
       prisma.dish.findMany({
         where,
-        include: {
-          flavors: { select: { id: true, flavor: { select: { id: true, name: true } } } },
-          ingredients: {
-            select: {
-              id: true,
-              ingredient: { select: { id: true, name: true } },
-            },
-          },
-        },
+        include: dishInclude,
         orderBy: { createdAt: "desc" },
         skip,
         take: pageSize,
@@ -122,7 +202,13 @@ export async function getDishes(filters?: {
 
     return {
       success: true as const,
-      data: { dishes, total, page, pageSize, totalPages },
+      data: {
+        dishes: dishes.map(withPairedDishes),
+        total,
+        page,
+        pageSize,
+        totalPages,
+      },
     }
   } catch {
     return { success: false as const, error: "Failed to fetch dishes" }
@@ -135,22 +221,14 @@ export async function getDishById(dishId: string) {
 
     const dish = await prisma.dish.findFirst({
       where: { id: dishId, userId },
-      include: {
-        flavors: { select: { id: true, flavor: { select: { id: true, name: true } } } },
-        ingredients: {
-          select: {
-            id: true,
-            ingredient: { select: { id: true, name: true } },
-          },
-        },
-      },
+      include: dishInclude,
     })
 
     if (!dish) {
       return { success: false as const, error: "Dish not found" }
     }
 
-    return { success: true as const, data: { dish } }
+    return { success: true as const, data: { dish: withPairedDishes(dish) } }
   } catch {
     return { success: false as const, error: "Failed to fetch dish" }
   }
@@ -163,6 +241,7 @@ export async function createDish(formData: {
   isSpecial?: boolean
   flavors?: string[]
   ingredientIds?: string[]
+  pairedDishIds?: string[]
 }) {
   try {
     const userId = await getUserId()
@@ -174,44 +253,47 @@ export async function createDish(formData: {
 
     const dedupedFlavors = dedupeFlavorsCaseInsensitive(parsed.data.flavors)
 
-    const dish = await prisma.dish.create({
-      data: {
-        name: parsed.data.name,
-        category: parsed.data.category,
-        mealTime: parsed.data.mealTime,
-        isSpecial: parsed.data.isSpecial,
-        userId,
-        flavors: {
-          create: await Promise.all(
-            dedupedFlavors.map(async (flavorName) => {
-              const flavor = await prisma.flavor.upsert({
-                where: { name_userId: { name: flavorName, userId } },
-                update: {},
-                create: { name: flavorName, userId },
-              })
-              return { flavorId: flavor.id }
-            }),
-          ),
-        },
-        ingredients: {
-          create: parsed.data.ingredientIds.map((ingredientId) => ({
-            ingredientId,
-          })),
-        },
-      },
-      include: {
-        flavors: { select: { id: true, flavor: { select: { id: true, name: true } } } },
-        ingredients: {
-          select: {
-            id: true,
-            ingredient: { select: { id: true, name: true } },
+    const dish = await prisma.$transaction(async (tx) => {
+      const created = await tx.dish.create({
+        data: {
+          name: parsed.data.name,
+          category: parsed.data.category,
+          mealTime: parsed.data.mealTime,
+          isSpecial: parsed.data.isSpecial,
+          userId,
+          flavors: {
+            create: await Promise.all(
+              dedupedFlavors.map(async (flavorName) => {
+                const flavor = await tx.flavor.upsert({
+                  where: { name_userId: { name: flavorName, userId } },
+                  update: {},
+                  create: { name: flavorName, userId },
+                })
+                return { flavorId: flavor.id }
+              }),
+            ),
+          },
+          ingredients: {
+            create: parsed.data.ingredientIds.map((ingredientId) => ({
+              ingredientId,
+            })),
           },
         },
-      },
+      })
+
+      await syncDishPairings(tx, userId, created.id, parsed.data.pairedDishIds)
+
+      return tx.dish.findUniqueOrThrow({
+        where: { id: created.id },
+        include: dishInclude,
+      })
     })
 
-    return { success: true as const, data: { dish } }
-  } catch {
+    return { success: true as const, data: { dish: withPairedDishes(dish) } }
+  } catch (e) {
+    if (e instanceof PairingValidationError) {
+      return { success: false as const, error: e.message }
+    }
     return { success: false as const, error: "Failed to create dish" }
   }
 }
@@ -225,6 +307,7 @@ export async function updateDish(
     isSpecial?: boolean
     flavors?: string[]
     ingredientIds?: string[]
+    pairedDishIds?: string[]
   },
 ) {
   try {
@@ -244,46 +327,49 @@ export async function updateDish(
 
     const dedupedFlavors = dedupeFlavorsCaseInsensitive(parsed.data.flavors)
 
-    const dish = await prisma.dish.update({
-      where: { id: dishId },
-      data: {
-        name: parsed.data.name,
-        category: parsed.data.category,
-        mealTime: parsed.data.mealTime,
-        isSpecial: parsed.data.isSpecial,
-        flavors: {
-          deleteMany: {},
-          create: await Promise.all(
-            dedupedFlavors.map(async (flavorName) => {
-              const flavor = await prisma.flavor.upsert({
-                where: { name_userId: { name: flavorName, userId } },
-                update: {},
-                create: { name: flavorName, userId },
-              })
-              return { flavorId: flavor.id }
-            }),
-          ),
-        },
-        ingredients: {
-          deleteMany: {},
-          create: parsed.data.ingredientIds.map((ingredientId) => ({
-            ingredientId,
-          })),
-        },
-      },
-      include: {
-        flavors: { select: { id: true, flavor: { select: { id: true, name: true } } } },
-        ingredients: {
-          select: {
-            id: true,
-            ingredient: { select: { id: true, name: true } },
+    const dish = await prisma.$transaction(async (tx) => {
+      await tx.dish.update({
+        where: { id: dishId },
+        data: {
+          name: parsed.data.name,
+          category: parsed.data.category,
+          mealTime: parsed.data.mealTime,
+          isSpecial: parsed.data.isSpecial,
+          flavors: {
+            deleteMany: {},
+            create: await Promise.all(
+              dedupedFlavors.map(async (flavorName) => {
+                const flavor = await tx.flavor.upsert({
+                  where: { name_userId: { name: flavorName, userId } },
+                  update: {},
+                  create: { name: flavorName, userId },
+                })
+                return { flavorId: flavor.id }
+              }),
+            ),
+          },
+          ingredients: {
+            deleteMany: {},
+            create: parsed.data.ingredientIds.map((ingredientId) => ({
+              ingredientId,
+            })),
           },
         },
-      },
+      })
+
+      await syncDishPairings(tx, userId, dishId, parsed.data.pairedDishIds)
+
+      return tx.dish.findUniqueOrThrow({
+        where: { id: dishId },
+        include: dishInclude,
+      })
     })
 
-    return { success: true as const, data: { dish } }
-  } catch {
+    return { success: true as const, data: { dish: withPairedDishes(dish) } }
+  } catch (e) {
+    if (e instanceof PairingValidationError) {
+      return { success: false as const, error: e.message }
+    }
     return { success: false as const, error: "Failed to update dish" }
   }
 }

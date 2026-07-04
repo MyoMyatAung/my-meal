@@ -1,10 +1,16 @@
+// Redeclared locally rather than imported from @prisma/client — lib/planner
+// has zero framework/ORM imports (architecture.md invariant 1).
+export type Category = "MAIN" | "SIDE" | "SOUP" | "SNACK" | "ACCOMPANIMENTS" | "OTHER"
+
 export interface PlannerDish {
   id: string
   name: string
+  category: Category
   mealTime: "Breakfast" | "Lunch"
   isSpecial: boolean
   flavors: string[]
   ingredientNames: string[]
+  pairedDishIds: string[]
 }
 
 export interface GenerationInput {
@@ -19,6 +25,7 @@ export type WarningCode =
   | "FLAVOR_COLLISION_RELAXED"
   | "NO_SPECIAL_DISH"
   | "REPEAT_FORCED"
+  | "NO_PAIRED_DISH_FALLBACK"
 
 export interface PlannerWarning {
   code: WarningCode

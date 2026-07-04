@@ -15,6 +15,10 @@ export const DishSchema = z
       .array(z.string().cuid())
       .max(20)
       .default([]),
+    pairedDishIds: z
+      .array(z.string().cuid())
+      .max(20)
+      .default([]),
   })
   .refine(
     (data) => !(data.mealTime === "Breakfast" && data.isSpecial),

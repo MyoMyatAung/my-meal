@@ -8,7 +8,7 @@ import type {
   ShoppingItem,
 } from "./types"
 import { checkPreFlightGate } from "./gate"
-import { hasFlavorCollision, pickNonRepeatDish, wouldRepeat } from "./rules"
+import { hasFlavorCollision, pickPairedSideOrSoup, pickCompensatoryDish } from "./rules"
 
 export class PreFlightGateError extends Error {
   constructor(public readonly errors: string[]) {
@@ -17,7 +17,7 @@ export class PreFlightGateError extends Error {
   }
 }
 
-export const LUNCH_THREE_DISH_PROBABILITY = 0.2
+export const MAIN_SIDE_SAME_FLAVOR_PROBABILITY = 0.3
 
 function shuffle<T>(array: T[], random: () => number): T[] {
   const result = [...array]
@@ -45,17 +45,6 @@ function isWeekend(date: Date): boolean {
   return day === 0 || day === 6
 }
 
-function getFlavorSets(dishes: PlannerDish[]): Set<string>[] {
-  return dishes.map((d) => new Set(d.flavors))
-}
-
-function areFlavorClean(a: Set<string>, b: Set<string>): boolean {
-  for (const f of a) {
-    if (b.has(f)) return false
-  }
-  return true
-}
-
 interface WindowInfoFull {
   startOffset: number
   length: number
@@ -68,8 +57,8 @@ function buildWindowInfos(
 ): WindowInfoFull[] {
   const windows: WindowInfoFull[] = []
 
-  for (let wStart = 0; wStart < durationDays; wStart += 14) {
-    const wLen = Math.min(14, durationDays - wStart)
+  for (let wStart = 0; wStart < durationDays; wStart += 7) {
+    const wLen = Math.min(7, durationDays - wStart)
     const weekendOffsets: number[] = []
 
     for (let d = 0; d < wLen; d++) {
@@ -130,38 +119,67 @@ export function generatePlan(input: GenerationInput): GenerationOutput {
     }
   }
 
-  const assignedBreakfastIds = new Set<string>()
-  const assignedLunchIds = new Set<string>()
+  // Regular (non-special) Main/Side/Soup/compensatory picks are drawn from
+  // the Lunch pool minus *every* Special-flagged dish. Special dishes belong
+  // only on their designated Special day — excluding just the one reserved
+  // special dish let any *other* Special-flagged dish leak into the regular
+  // pool and get served as an ordinary weekday Main/Side, which surfaced as a
+  // bogus second "Special day" (and a multi-dish "special" lunch) in the UI.
+  const regularLunchPool = lunchDishes.filter((d) => !d.isSpecial)
+  const mainPool = regularLunchPool.filter((d) => d.category === "MAIN")
+  const sideOrSoupPool = regularLunchPool.filter(
+    (d) => d.category === "SIDE" || d.category === "SOUP"
+  )
+  const compensatoryPool = regularLunchPool.filter(
+    (d) =>
+      d.category === "SNACK" ||
+      d.category === "ACCOMPANIMENTS" ||
+      d.category === "OTHER"
+  )
 
-  if (hasSpecialDish && specialDish) {
-    assignedLunchIds.add(specialDish.id)
-  }
   const entries: PlannerEntry[] = []
   const usedIngredients: { ingredientName: string; dishName: string }[] = []
 
   let insufficientBreakfastWarned = false
   let flavorCollisionWarned = false
   let repeatForcedWarned = false
+  let pairedFallbackWarned = false
+  let compensatoryFallbackWarned = false
+
+  let currentWeekBlock = -1
+  let weekLunchIds = new Set<string>()
+  let weekBreakfastIds = new Set<string>()
+  let breakfastCursor = 0
 
   for (let dayOffset = 0; dayOffset < durationDays; dayOffset++) {
     const date = addDays(startOfDay(startDate), dayOffset)
     const isSpecialDay = specialDayOffsets.has(dayOffset)
 
-    const breakfastCandidates = breakfastDishes.filter(
-      (d) => !assignedBreakfastIds.has(d.id)
-    )
-    let breakfastDish = breakfastCandidates[0]
-    if (!breakfastDish) {
-      if (!insufficientBreakfastWarned) {
-        warnings.push({
-          code: "INSUFFICIENT_BREAKFAST_VARIETY",
-          message: "Not enough Breakfast dishes to avoid repeats — some breakfasts will repeat.",
-        })
-        insufficientBreakfastWarned = true
-      }
-      breakfastDish = breakfastDishes[0]
+    const weekBlock = Math.floor(dayOffset / 7)
+    if (weekBlock !== currentWeekBlock) {
+      currentWeekBlock = weekBlock
+      weekLunchIds = new Set<string>()
+      weekBreakfastIds = new Set<string>()
     }
-    assignedBreakfastIds.add(breakfastDish.id)
+
+    // ─── Breakfast (per-7-day-block no-repeat, mirroring Lunch) ────────
+    // Round-robin through the shuffled pool so that, when the library has
+    // fewer breakfasts than the plan is long, repeats are spread evenly
+    // across the period instead of the same dish landing several days in a
+    // row. With ≥7 breakfasts this never repeats inside any 7-day block.
+    const breakfastDish =
+      breakfastDishes[breakfastCursor % breakfastDishes.length]
+    breakfastCursor++
+
+    if (weekBreakfastIds.has(breakfastDish.id) && !insufficientBreakfastWarned) {
+      warnings.push({
+        code: "INSUFFICIENT_BREAKFAST_VARIETY",
+        message:
+          "Not enough Breakfast dishes to avoid repeats within a 7-day window — some breakfasts will repeat.",
+      })
+      insufficientBreakfastWarned = true
+    }
+    weekBreakfastIds.add(breakfastDish.id)
 
     entries.push({
       date,
@@ -183,8 +201,9 @@ export function generatePlan(input: GenerationInput): GenerationOutput {
       })
     }
 
+    // ─── Lunch ─────────────────────────────────────────────────────────
     if (isSpecialDay && hasSpecialDish && specialDish) {
-      assignedLunchIds.add(specialDish.id)
+      weekLunchIds.add(specialDish.id)
 
       entries.push({
         date,
@@ -208,80 +227,123 @@ export function generatePlan(input: GenerationInput): GenerationOutput {
     } else {
       const lunchSlotDishes: PlannerEntryDish[] = []
 
-      const nonRepeatCandidates = lunchDishes.filter(
-        (d) => !assignedLunchIds.has(d.id)
-      )
-      const flavorSets = getFlavorSets(nonRepeatCandidates)
+      // Main
+      const mainNonRepeat = mainPool.filter((d) => !weekLunchIds.has(d.id))
+      let mainForcedRepeat = false
+      let main: PlannerDish
+      if (mainNonRepeat.length > 0) {
+        main = mainNonRepeat[0]
+      } else {
+        mainForcedRepeat = true
+        main = mainPool[0]
+      }
 
-      const flavorCleanCandidates: PlannerDish[] = []
-      const flavorCleanSets: Set<string>[] = []
+      weekLunchIds.add(main.id)
+      lunchSlotDishes.push({ dishId: main.id, dishName: main.name, sortOrder: 0 })
+      for (const ingredient of main.ingredientNames) {
+        usedIngredients.push({ ingredientName: ingredient, dishName: main.name })
+      }
 
-      for (let i = 0; i < nonRepeatCandidates.length; i++) {
-        let isClean = true
-        for (const existing of flavorCleanSets) {
-          if (!areFlavorClean(existing, flavorSets[i])) {
-            isClean = false
-            break
+      // Side/Soup — drawn from the Main's pairings when available
+      const preferSameFlavor = random() < MAIN_SIDE_SAME_FLAVOR_PROBABILITY
+      const sideResult = pickPairedSideOrSoup({
+        main,
+        candidates: sideOrSoupPool,
+        weekAssignedIds: weekLunchIds,
+        preferSameFlavor,
+      })
+
+      let flavorCollisionOccurred = false
+      let sideOrSoup: PlannerDish | null = null
+
+      if (sideResult.dish) {
+        sideOrSoup = sideResult.dish
+        weekLunchIds.add(sideOrSoup.id)
+        lunchSlotDishes.push({
+          dishId: sideOrSoup.id,
+          dishName: sideOrSoup.name,
+          sortOrder: 1,
+        })
+        for (const ingredient of sideOrSoup.ingredientNames) {
+          usedIngredients.push({
+            ingredientName: ingredient,
+            dishName: sideOrSoup.name,
+          })
+        }
+
+        if (sideResult.usedFallback && !pairedFallbackWarned) {
+          warnings.push({
+            code: "NO_PAIRED_DISH_FALLBACK",
+            message:
+              "No paired Side/Soup dish found for at least one Main course — used the flavor-based fallback pick instead.",
+          })
+          pairedFallbackWarned = true
+        }
+
+        if (
+          (mainForcedRepeat || sideResult.forcedRepeat) &&
+          !repeatForcedWarned
+        ) {
+          warnings.push({
+            code: "REPEAT_FORCED",
+            message:
+              "Not enough Lunch dish variety to avoid repeats within a 7-day window — some lunches will repeat.",
+          })
+          repeatForcedWarned = true
+        }
+
+        if (hasFlavorCollision([main, sideOrSoup])) {
+          flavorCollisionOccurred = true
+          if (!flavorCollisionWarned) {
+            warnings.push({
+              code: "FLAVOR_COLLISION_RELAXED",
+              message:
+                "A Main course and its paired Side/Soup share a flavor — allowed as an occasional relaxation.",
+            })
+            flavorCollisionWarned = true
           }
         }
-        if (isClean) {
-          flavorCleanCandidates.push(nonRepeatCandidates[i])
-          flavorCleanSets.push(flavorSets[i])
-        }
-      }
-
-      let useThree = false
-      if (flavorCleanCandidates.length >= 3) {
-        useThree = random() < LUNCH_THREE_DISH_PROBABILITY
-      }
-
-      let selectedCandidates = flavorCleanCandidates
-      let relaxType: "flavor" | "repeat" | null = null
-
-      if (selectedCandidates.length < 2) {
-        selectedCandidates = nonRepeatCandidates
-        if (selectedCandidates.length < 2) {
-          relaxType = "repeat"
-          selectedCandidates = lunchDishes
-        } else {
-          relaxType = "flavor"
-        }
-      } else if (useThree && selectedCandidates.length >= 3) {
-        // Keep the 3 from flavorCleanCandidates
-      } else {
-        selectedCandidates = selectedCandidates.slice(0, 2)
-      }
-
-      if (relaxType === "flavor" && !flavorCollisionWarned) {
-        warnings.push({
-          code: "FLAVOR_COLLISION_RELAXED",
-          message: "Not enough flavor-distinct lunch dishes — some lunch slots have overlapping flavors.",
-        })
-        flavorCollisionWarned = true
-      } else if (relaxType === "repeat" && !repeatForcedWarned) {
+      } else if (mainForcedRepeat && !repeatForcedWarned) {
         warnings.push({
           code: "REPEAT_FORCED",
-          message: "Not enough lunch dishes to avoid repeats — some lunches will repeat.",
+          message:
+            "Not enough Lunch dish variety to avoid repeats within a 7-day window — some lunches will repeat.",
         })
         repeatForcedWarned = true
       }
 
-      const dishCount = useThree && selectedCandidates.length >= 3 ? 3 : Math.min(2, selectedCandidates.length)
-
-      for (let i = 0; i < dishCount; i++) {
-        const dish = selectedCandidates[i]
-        assignedLunchIds.add(dish.id)
-        lunchSlotDishes.push({
-          dishId: dish.id,
-          dishName: dish.name,
-          sortOrder: i,
+      // Optional compensatory 3rd dish — only when Main+Side/Soup collided
+      if (flavorCollisionOccurred && sideOrSoup) {
+        const compResult = pickCompensatoryDish({
+          main,
+          sideOrSoup,
+          candidates: compensatoryPool,
+          weekAssignedIds: weekLunchIds,
         })
 
-        for (const ingredient of dish.ingredientNames) {
-          usedIngredients.push({
-            ingredientName: ingredient,
-            dishName: dish.name,
+        if (compResult.dish) {
+          const compensatoryDish = compResult.dish
+          weekLunchIds.add(compensatoryDish.id)
+          lunchSlotDishes.push({
+            dishId: compensatoryDish.id,
+            dishName: compensatoryDish.name,
+            sortOrder: 2,
           })
+          for (const ingredient of compensatoryDish.ingredientNames) {
+            usedIngredients.push({
+              ingredientName: ingredient,
+              dishName: compensatoryDish.name,
+            })
+          }
+
+          if (compResult.usedFallback && !compensatoryFallbackWarned) {
+            warnings.push({
+              code: "NO_PAIRED_DISH_FALLBACK",
+              message:
+                "No dish paired to both the Main and Side/Soup was available for the bonus 3rd dish — used the flavor-based fallback pick instead.",
+            })
+            compensatoryFallbackWarned = true
+          }
         }
       }
 

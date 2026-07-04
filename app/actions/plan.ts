@@ -44,16 +44,23 @@ export async function generatePlanAction({
         ingredients: {
           select: { ingredient: { select: { id: true, name: true } } },
         },
+        pairingsAsA: { select: { dishBId: true } },
+        pairingsAsB: { select: { dishAId: true } },
       },
     })
 
     const plannerDishes: PlannerDish[] = dishes.map((d) => ({
       id: d.id,
       name: d.name,
+      category: d.category,
       mealTime: d.mealTime,
       isSpecial: d.isSpecial,
       flavors: d.flavors.map((df) => df.flavor.name),
       ingredientNames: d.ingredients.map((di) => di.ingredient.name),
+      pairedDishIds: [
+        ...d.pairingsAsA.map((p) => p.dishBId),
+        ...d.pairingsAsB.map((p) => p.dishAId),
+      ],
     }))
 
     const ingredientMap = new Map<string, string>()
@@ -173,6 +180,7 @@ async function findPlanWithWarnings(
 
   const warningInput: WarningEntry[] = plan.entries.map((entry) => ({
     entryId: entry.id,
+    date: entry.date,
     mealTime: entry.mealTime,
     dishes: entry.dishes.map((entryDish) => ({
       dishId: entryDish.dish.id,
@@ -373,14 +381,25 @@ export async function swapDishAction(input: {
 export async function getDishCounts() {
   const userId = await getUserId()
 
-  const [breakfast, lunch] = await Promise.all([
+  const [breakfast, lunch, main, sideOrSoup] = await Promise.all([
     prisma.dish.count({
       where: { userId, isArchived: false, mealTime: "Breakfast" },
     }),
     prisma.dish.count({
       where: { userId, isArchived: false, mealTime: "Lunch" },
     }),
+    prisma.dish.count({
+      where: { userId, isArchived: false, mealTime: "Lunch", category: "MAIN" },
+    }),
+    prisma.dish.count({
+      where: {
+        userId,
+        isArchived: false,
+        mealTime: "Lunch",
+        category: { in: ["SIDE", "SOUP"] },
+      },
+    }),
   ])
 
-  return { breakfast, lunch }
+  return { breakfast, lunch, main, sideOrSoup }
 }
