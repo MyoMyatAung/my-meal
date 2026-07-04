@@ -6,8 +6,8 @@ My Meal is a multi-user web app for weekly meal planning and shopping.
 Each user maintains a private library of dishes (recipes) tagged with
 category, flavor, meal time, and ingredients. From that library, the
 app randomly generates a meal plan for a user-chosen date range —
-enforcing flavor balance per lunch, no dish repeats within the period,
-and a once-per-two-weeks "Special Day" — then aggregates every
+enforcing flavor balance per lunch, no dish repeats within any 7-day
+block, and a once-a-week "Special Day" — then aggregates every
 ingredient in the plan into a single deduplicated shopping list the
 user can check off while shopping.
 
@@ -29,13 +29,21 @@ There isn't one linear onboarding path — the app is built around a
 few recurring loops:
 
 1. **Library loop** — add, edit, or archive dishes as the user's
-   regular recipes change.
-2. **Planning loop** (the primary loop) — set a start date and
+   regular recipes change, including linking a Lunch dish to the other
+   Lunch dishes it's usually served with.
+2. **Pairing loop** — from any Lunch dish's entry in the library, pick
+   the other Lunch dishes it naturally goes with. The relationship is
+   mutual — pairing Dish A to Dish B also shows Dish B as paired to A,
+   with no second edit required.
+3. **Planning loop** (the primary loop) — set a start date and
    duration → generate a plan → view it → use the generated shopping
-   list while shopping → check items off.
-3. **Editing loop** — open an existing plan and swap an individual
+   list while shopping → check items off. Generation draws on the
+   user's pairings when choosing each lunch's Side dish or Soup.
+4. **Editing loop** — open an existing plan and swap an individual
    dish in a specific slot, without regenerating the whole period.
-4. **Review loop** — browse past plans and their shopping lists.
+   Pairing has no effect here — a swap still offers every dish of the
+   same meal time.
+5. **Review loop** — browse past plans and their shopping lists.
 
 ## Features
 
@@ -50,21 +58,55 @@ few recurring loops:
 - Archiving a dish removes it from future generation but does not
   change how it displays in any plan that already references it
 
+### Dish Pairing
+
+- From a Lunch dish's form, a user can select any number of other
+  Lunch dishes as "paired" with it — any category can pair with any
+  other (a Main with a Side, a Main with a Soup, a Side with an
+  Accompaniment, and so on)
+- Pairing is always mutual: pairing Dish A to Dish B also pairs Dish B
+  to Dish A, with no separate step required on B's side
+- Breakfast dishes can't be paired — breakfast is always a single
+  dish, so a pairing on one would never be used
+- Pairing is optional; a dish with no pairings still generates
+  normally, via the flavor-based fallback described below
+
 ### Meal Plan Generation
 
 - User sets start date and duration (default 14 days; any number of
   days/weeks)
-- Breakfast: 1 dish/day, no flavor rule, no repeats within the period
-- Lunch: 2–3 dishes/day, all flavors distinct within that lunch, no
-  repeats within the period
-- Exactly one Special Day per 2-week cycle, on a Saturday or Sunday —
-  that day's lunch is a single Special-flagged dish and nothing else
+- Breakfast: 1 dish/day, no flavor rule, no repeats within any 7-day
+  block (same weekly window as Lunch)
+- Lunch: a mandatory Main course, a mandatory Side dish or Soup, and
+  an optional third dish (Snack, Accompaniment, or Other) — 2–3
+  dishes/day. The Side dish or Soup is chosen from the Main's paired
+  dishes when any exist; a Main with no pairings still produces a
+  complete, valid lunch via the prior flavor-based pick
+- Flavors are distinct across a lunch's dishes, with one deliberate,
+  occasional exception: a Main and its paired Side/Soup are allowed to
+  share a flavor about 3 times in 10, reflecting that real
+  well-paired dishes often do. This is always surfaced as a visible
+  warning, whether the overlap was the deliberate roll or a forced
+  relaxation (no flavor-clean paired option existed). When a collision
+  occurs, an optional third dish — flavor-distinct from both, and
+  preferring one paired to both the Main and the Side/Soup — may be
+  added
+- No dish repeats within any 7-day block of the plan, for both Lunch
+  and Breakfast — a dish used in one week can't reappear that same week
+  but can reappear the week after. When the library has fewer
+  breakfasts than a week is long, the generator round-robins the pool
+  so forced repeats are spread evenly across the period rather than
+  landing on consecutive days
+- Exactly one Special Day per week, on a Saturday or Sunday — that
+  day's lunch is a single Special-flagged dish and nothing else
 - Hard pre-flight gate: generation is blocked entirely if the library
-  has fewer than 1 Breakfast dish or 2 Lunch dishes, surfaced as a
-  named blocking banner on the Dashboard
+  has fewer than 1 Breakfast dish, fewer than 1 Main dish, or fewer
+  than 1 Side-or-Soup dish, surfaced as a named blocking banner on the
+  Dashboard
 - Soft constraints (not enough flavor variety, not enough dishes to
-  avoid a repeat, no Special dish available) auto-relax with a
-  specific, visible explanation of what was relaxed
+  avoid a repeat within the current window, no Special dish available,
+  no paired dish available for a Main) auto-relax with a specific,
+  visible explanation of what was relaxed
 
 ### Manual Plan Editing
 
@@ -110,13 +152,20 @@ few recurring loops:
 - Sharing or collaborating on a dish library or plan between users
 - Keeping more than one active plan at a time per user (only the
   current plan + history)
+- Suggested or auto-generated dish pairings — a user always links
+  dishes manually, one relationship at a time
+- Pairing-aware behavior in manual plan editing (a swap stays scoped
+  to same meal time only, regardless of pairing)
+- Role-labeled lunch display (e.g. "Main"/"Side" tags on the day
+  card) — pairing shapes generation only, not how a lunch is shown
 
 ## Success Criteria
 
-1. A user with at least 1 Breakfast dish and 2 Lunch dishes can
-   generate a plan for any start date/duration and get a result with
-   zero unexplained rule violations — every relaxation that occurs is
-   named in a visible warning.
+1. A user with at least 1 Breakfast dish, 1 Main dish, and 1
+   Side-or-Soup dish can generate a plan for any start date/duration
+   and get a result with zero unexplained rule violations — every
+   relaxation that occurs, including a forced or deliberate Main/Side
+   flavor overlap, is named in a visible warning.
 2. A generated plan's shopping list contains exactly the deduplicated
    ingredients used by its dishes, with no near-duplicate entries from
    naming variants.
@@ -128,3 +177,8 @@ few recurring loops:
    violation visibly flagged.
 5. Archiving a dish never alters how that dish appears in plans
    generated before the archive happened.
+6. A user who has paired their Main courses with complementary sides
+   sees those specific combinations appear in generated plans, without
+   any extra step beyond having set up the pairing.
+7. Across a generated plan, the same dish never appears twice inside
+   any single week, but reasonably can across different weeks.

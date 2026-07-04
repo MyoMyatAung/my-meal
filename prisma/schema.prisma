@@ -92,8 +92,22 @@ model Dish {
   flavors     DishFlavor[]
   ingredients DishIngredient[]
   planEntries MealPlanEntryDish[]
+  pairingsAsA DishPairing[]       @relation("DishPairingA")
+  pairingsAsB DishPairing[]       @relation("DishPairingB")
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+}
+
+model DishPairing {
+  id      String @id @default(cuid())
+  dishAId String
+  dishBId String
+
+  dishA Dish @relation("DishPairingA", fields: [dishAId], references: [id], onDelete: Cascade)
+  dishB Dish @relation("DishPairingB", fields: [dishBId], references: [id], onDelete: Cascade)
+
+  @@unique([dishAId, dishBId])
+  @@index([dishBId])
 }
 
 model Flavor {

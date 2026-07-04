@@ -4,13 +4,96 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 7 — History + Account Settings + Polish: Completed
+- Phase 8 — Dish Pairing + Updated Plan Generation Rules: Completed
 
 ## Current Goal
 
-- None — all planned phases (1–7) complete.
+- None — all planned phases (1–8) complete.
 
 ## Completed
+
+- Bugfix: Breakfast no-repeat scope changed from period-wide to the
+  same per-7-day-block window as Lunch (user report — 9 breakfasts over
+  a 14-day plan wrongly repeated one dish 5 days straight). Generator
+  now round-robins the shuffled breakfast pool (`breakfastCursor` +
+  per-block `weekBreakfastIds`) so forced repeats spread evenly and
+  never land on consecutive days; `INSUFFICIENT_BREAKFAST_VARIETY` now
+  fires only on an in-block collision. `computeEntryWarnings`
+  (`edit-warnings.ts`) now scopes "repeats elsewhere" to a 7-day block
+  (needs each entry's `date`; threaded through from `plan.ts`).
+  Updated `project-overview.md` rules + generator/edit-warnings tests.
+- Phase 8: Dish Pairing + Updated Plan Generation Rules
+  - **8A — Dish pairing data layer:**
+    - Added `DishPairing` model to `prisma/schema.prisma` (canonical
+      `dishAId < dishBId` row per unordered pair, `onDelete: Cascade` both
+      sides, `@@unique([dishAId, dishBId])`, `@@index([dishBId])`) and
+      `Dish.pairingsAsA`/`pairingsAsB` relations
+    - Hand-authored migration `20260703000000_add_dish_pairing`, applied via
+      `prisma migrate deploy` (shadow-database replay against Neon fails for
+      `prisma migrate dev` in this project — same workaround already used
+      for `20260630000000_add_plan_warnings`)
+    - Added `pairedDishIds: z.array(z.string().cuid()).max(20).default([])`
+      to `DishSchema` in `lib/zod/dish.ts`
+    - `app/actions/dishes.ts`: added `syncDishPairings` (diffs desired
+      pairing set against existing `DishPairing` rows via
+      `OR: [{dishAId}, {dishBId}]`, rejects any target that isn't the
+      user's own `mealTime: "Lunch"` dish via `PairingValidationError`),
+      wired into `createDish`/`updateDish` inside a `prisma.$transaction`
+      alongside the existing flavor/ingredient writes; extended
+      `DishWithRelations` with `pairedDishes: {id, name, category}[]`
+      (normalized from `pairingsAsA`/`pairingsAsB` via `withPairedDishes`)
+  - **8B — Planner core rewrite:**
+    - `lib/planner/types.ts`: added `category` (local `Category` union, not
+      `@prisma/client`) and `pairedDishIds` to `PlannerDish`; added
+      `NO_PAIRED_DISH_FALLBACK` to `WarningCode`
+    - `lib/planner/gate.ts`: replaced `MIN_LUNCH_DISHES` with
+      `MIN_MAIN_DISHES` (1) and `MIN_SIDE_OR_SOUP_DISHES` (1), each with its
+      own named blocking message
+    - `lib/planner/rules.ts`: added `sharesFlavor`, `pickPairedSideOrSoup`
+      (Main's pairings → same/different-flavor preference roll → fallback
+      to the full Side/Soup pool when unpaired), `pickCompensatoryDish`
+      (intersection of Main's and Side/Soup's pairings, flavor-clean
+      against both, falls back to an unpaired flavor-clean pick)
+    - `lib/planner/generate.ts`: rewrote Lunch assignment — Main picked
+      non-repeating within a 7-day block (`Math.floor(dayOffset/7)`,
+      mirroring the existing 14-day Special Day windowing idiom), Side/Soup
+      via `pickPairedSideOrSoup` with a new
+      `MAIN_SIDE_SAME_FLAVOR_PROBABILITY = 0.3` roll (replaces the removed
+      `LUNCH_THREE_DISH_PROBABILITY`), compensatory 3rd dish via
+      `pickCompensatoryDish` only when Main+Side/Soup collided on flavor.
+      Breakfast, the pre-flight gate call, and Special Day window/placement
+      are unchanged
+    - `lib/planner/fixtures.ts`: added `category`/`pairedDishIds` to every
+      existing fixture; added `noMainLibrary`, `noSideOrSoupLibrary`,
+      `unpairedMainLibrary`, `pairedMixedFlavorLibrary`,
+      `triplePairedLibrary`, `compensatoryFallbackLibrary`,
+      `weeklyRepeatLibrary`
+    - `lib/planner/generate.test.ts`: rewrote gate/pairing/compensatory/
+      weekly-repeat test groups (64 tests total); statistical ~30%
+      collision-rate check uses a seeded `mulberry32` PRNG over a 700-day
+      run, not `Math.random()`, to stay deterministic
+  - **8C — Dish form UI:**
+    - Added `components/dish-pairing-combobox.tsx` (same search/badge
+      interaction shape as `ingredient-combobox.tsx`, no create affordance,
+      candidates from `getDishes({ mealTime: "Lunch" })` minus the dish
+      being edited)
+    - Wired into `dish-dialog.tsx`, rendered only when `mealTime === "Lunch"`
+      (auto-clears `pairedDishIds` if switched to Breakfast, mirroring the
+      existing `isSpecial` reset effect)
+    - Added an optional "Paired with: X, Y" line to `dish-card.tsx`
+  - **8D — Dashboard gate banner:**
+    - `app/actions/plan.ts`: `generatePlanAction` now maps `category` and
+      `pairedDishIds` (resolved from `pairingsAsA`/`pairingsAsB`) into
+      `PlannerDish`; `getDishCounts` extended with `main`/`sideOrSoup`
+      per-category counts
+    - `app/(dashboard)/page.tsx`: blocking banner now lists each missing
+      category by name with live counts (Breakfast/Main/Side-or-Soup)
+      instead of the old single "Breakfast + 2 Lunch" message
+  - Verified: typecheck ✓, build ✓, vitest ✓ (64 tests), manual browser
+    walkthrough (sign-up → create paired Main+Side dishes → confirmed
+    mutual pairing appears on both cards immediately → generated a plan and
+    confirmed the pairing was used for every lunch → edited one dish to
+    remove the pairing → confirmed it disappeared from both cards)
 
 - Phase 7: History + Account Settings + Polish
   - **7A — History data layer:**
@@ -324,6 +407,53 @@ Update this file after every meaningful implementation change.
     `plan-view.tsx` before passing warnings into `buildWarningCards`.
   - **File changed**: `app/(dashboard)/history/[planId]/page.tsx`
 
+- **Special Day cadence — weekly instead of biweekly** (2026-07-04)
+  - **Root cause**: not a bug — a product rule change. `buildWindowInfos`
+    in `lib/planner/generate.ts` chunked the plan into 14-day windows and
+    placed one Special Day per window, i.e. once every two weeks. The
+    single-dish and weekend-only rules were already correct; only the
+    cadence needed to change to once per week.
+  - **Fix**: changed the window chunk size from 14 to 7 days
+    (`wStart += 7`, `wLen = Math.min(7, ...)`) — every other part of the
+    algorithm (weekend detection, one-offset-per-window pick, single-dish
+    special lunch, exclusion of the special dish from the regular pool)
+    was already window-size-agnostic and needed no change.
+  - **Files changed**: `lib/planner/generate.ts`,
+    `lib/planner/generate.test.ts` (updated hardcoded special-day counts
+    for 7/14/20/28-day durations to match the new weekly cadence),
+    `.agents/context/project-overview.md` (updated the "once per 2-week
+    cycle" feature bullet to "once per week")
+
+- **Special Day — extra Special-flagged dishes leaked into regular lunches** (2026-07-04)
+  - **Root cause**: `generatePlan` reserves the *first* `isSpecial` Lunch
+    dish for the Special day (`lunchDishes.find((d) => d.isSpecial)`), but
+    `regularLunchPool` excluded only that one reserved dish
+    (`filter((d) => d.id !== specialDish.id)`). Any *other* Special-flagged
+    dish stayed in the regular Main/Side/compensatory pool and could be
+    served on an ordinary weekday. Because `lib/utils/plan-grouping.ts`
+    derives a day's `isSpecialDay` from whether any of its dishes has
+    `dish.isSpecial`, that leaked dish made a regular weekday render a
+    second, bogus "Special day" badge — with 2–3 dishes, violating both
+    "one special day per week" and "one dish per special day". Reproduced
+    on the Villa Myo account (library has ≥2 `isSpecial` Lunch dishes):
+    weekdays showed a false Special day alongside the real weekend one.
+  - **Fix**: `regularLunchPool = lunchDishes.filter((d) => !d.isSpecial)`
+    — reserve *every* Special-flagged dish for the Special day, so none can
+    fill a regular Main/Side/compensatory slot. With no special dish in a
+    regular lunch, `plan-grouping.ts`'s `isSpecialDay` derivation becomes
+    exact (true iff it's the real Special day) with no UI change needed.
+    Also hardened `lib/planner/gate.ts` to count only *non-special*
+    Mains/Side-or-Soups, so a library whose only Main/Side is Special-
+    flagged is blocked at the gate instead of crashing generation with an
+    empty regular pool.
+  - **Files changed**: `lib/planner/generate.ts`, `lib/planner/gate.ts`,
+    `lib/planner/generate.test.ts` (added a gate test for an all-Special
+    Main, and a generation test proving a 2-special-dish library yields one
+    single-dish Special day per week with no leak). Verified end to end:
+    regenerated a 21-day plan on the Villa Myo account → Special days land
+    only on Sat Jul 4 / Sun Jul 12 / Sun Jul 19, one dish each, no weekday
+    Special badge (DB + UI confirmed).
+
 - **SessionProvider breaking static generation** (2026-07-02)
   - **Root cause**: `next-auth` v4's `react/index.js` has no
     `"use client"` directive. Importing `SessionProvider` directly into
@@ -339,9 +469,33 @@ Update this file after every meaningful implementation change.
   - **File changed**: `components/session-provider.tsx` (new),
     `app/layout.tsx`
 
+## Files Created/Modified in Phase 8
+
+- `prisma/schema.prisma` (modified — `DishPairing` model + `Dish` relations)
+- `prisma/migrations/20260703000000_add_dish_pairing/migration.sql` (new)
+- `lib/zod/dish.ts` (modified — `pairedDishIds` on `DishSchema`)
+- `app/actions/dishes.ts` (modified — `syncDishPairings`, `dishInclude`,
+  `withPairedDishes`, `PairingValidationError`, transactional create/update)
+- `lib/planner/types.ts` (modified — `Category`, `pairedDishIds`,
+  `NO_PAIRED_DISH_FALLBACK`)
+- `lib/planner/gate.ts` (modified — `MIN_MAIN_DISHES`, `MIN_SIDE_OR_SOUP_DISHES`)
+- `lib/planner/rules.ts` (modified — `sharesFlavor`, `pickPairedSideOrSoup`,
+  `pickCompensatoryDish`)
+- `lib/planner/generate.ts` (rewritten — Lunch assignment,
+  `MAIN_SIDE_SAME_FLAVOR_PROBABILITY`)
+- `lib/planner/fixtures.ts` (modified — 7 new fixtures, `category`/
+  `pairedDishIds` added to all existing ones)
+- `lib/planner/generate.test.ts` (rewritten — 64 tests)
+- `components/dish-pairing-combobox.tsx` (new)
+- `components/dish-dialog.tsx` (modified — wired pairing combobox)
+- `components/dish-card.tsx` (modified — "Paired with" line)
+- `app/actions/plan.ts` (modified — `generatePlanAction` input mapping,
+  `getDishCounts` per-category counts)
+- `app/(dashboard)/page.tsx` (modified — new gate banner messages)
+
 ## In Progress
 
-- None (Phase 7 complete — all planned phases done)
+- None (Phase 8 complete — all planned phases done)
 
 ## Next Up
 

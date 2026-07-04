@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { formatCalendarDate, parseCalendarDate } from "@/lib/utils/date"
 import {
   MIN_BREAKFAST_DISHES,
-  MIN_LUNCH_DISHES,
+  MIN_MAIN_DISHES,
+  MIN_SIDE_OR_SOUP_DISHES,
 } from "@/lib/planner/gate"
 import { GreetingHeader } from "@/components/greeting-header"
 import {
@@ -22,9 +23,10 @@ export default async function HomePage() {
   const session = await getServerSession(authOptions)
   const [plan, counts] = await Promise.all([getCurrentPlan(), getDishCounts()])
 
-  const isBlocked =
-    counts.breakfast < MIN_BREAKFAST_DISHES ||
-    counts.lunch < MIN_LUNCH_DISHES
+  const missingBreakfast = counts.breakfast < MIN_BREAKFAST_DISHES
+  const missingMain = counts.main < MIN_MAIN_DISHES
+  const missingSideOrSoup = counts.sideOrSoup < MIN_SIDE_OR_SOUP_DISHES
+  const isBlocked = missingBreakfast || missingMain || missingSideOrSoup
 
   const planStartDate = plan
     ? formatCalendarDate(parseCalendarDate(plan.startDate.toISOString().slice(0, 10)), {
@@ -48,10 +50,24 @@ export default async function HomePage() {
           <CardContent className="flex items-start gap-3 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
             <div>
-              <p className="text-sm">
-                You need at least {MIN_BREAKFAST_DISHES} Breakfast dish and{" "}
-                {MIN_LUNCH_DISHES} Lunch dishes to generate a plan.
-              </p>
+              <p className="text-sm">You need at least:</p>
+              <ul className="mt-1 list-disc pl-4 text-sm">
+                {missingBreakfast && (
+                  <li>
+                    {MIN_BREAKFAST_DISHES} Breakfast dish (have {counts.breakfast})
+                  </li>
+                )}
+                {missingMain && (
+                  <li>
+                    {MIN_MAIN_DISHES} Main dish (have {counts.main})
+                  </li>
+                )}
+                {missingSideOrSoup && (
+                  <li>
+                    {MIN_SIDE_OR_SOUP_DISHES} Side or Soup dish (have {counts.sideOrSoup})
+                  </li>
+                )}
+              </ul>
               <Link
                 href="/dishes"
                 className="mt-1 inline-block text-sm font-medium text-foreground underline underline-offset-4 hover:text-muted-foreground"

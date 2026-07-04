@@ -48,6 +48,12 @@ export function DishCard({ dish, onEdit, onDelete }: DishCardProps) {
           </div>
         )}
 
+        {dish.pairedDishes.length > 0 && (
+          <p className="truncate text-xs text-muted-foreground">
+            Paired with: {dish.pairedDishes.map((d) => d.name).join(", ")}
+          </p>
+        )}
+
         <div className="flex gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             size="xs"

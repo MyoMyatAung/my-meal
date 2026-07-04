@@ -8,8 +8,32 @@ export interface WarningEntryDish {
 
 export interface WarningEntry {
   entryId: string
+  date: Date
   mealTime: "Breakfast" | "Lunch"
   dishes: WarningEntryDish[]
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * 7-day block index relative to the earliest entry date — mirrors the
+ * generator's `Math.floor(dayOffset / 7)` windowing so that "repeats
+ * elsewhere" only fires for dishes recurring inside the same 7-day block
+ * (both Breakfast and Lunch now share this weekly no-repeat rule).
+ */
+function blockIndex(date: Date, planStart: Date): number {
+  const days = Math.floor(
+    (startOfUTCDay(date) - startOfUTCDay(planStart)) / MS_PER_DAY
+  )
+  return Math.floor(days / 7)
+}
+
+function startOfUTCDay(date: Date): number {
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  )
 }
 
 export function computeEntryWarnings(entries: WarningEntry[]): Map<string, string[]> {
@@ -32,28 +56,39 @@ export function computeEntryWarnings(entries: WarningEntry[]): Map<string, strin
     }
   }
 
-  const byMealTime = new Map<"Breakfast" | "Lunch", WarningEntry[]>()
-  for (const entry of entries) {
-    byMealTime.set(entry.mealTime, [...(byMealTime.get(entry.mealTime) ?? []), entry])
-  }
+  // Repeats are scoped to a 7-day block: a dish may reappear in a later week
+  // without warning, but repeating inside the same block is flagged.
+  const planStart = entries.reduce<Date | null>(
+    (earliest, entry) =>
+      earliest === null || entry.date < earliest ? entry.date : earliest,
+    null
+  )
 
-  for (const sameTime of byMealTime.values()) {
-    const occurrences = new Map<string, { name: string; entryIds: Set<string> }>()
-    for (const entry of sameTime) {
-      for (const dish of entry.dishes) {
-        const record = occurrences.get(dish.dishId) ?? {
-          name: dish.dishName,
-          entryIds: new Set<string>(),
-        }
-        record.entryIds.add(entry.entryId)
-        occurrences.set(dish.dishId, record)
-      }
+  if (planStart !== null) {
+    const byGroup = new Map<string, WarningEntry[]>()
+    for (const entry of entries) {
+      const key = `${entry.mealTime}:${blockIndex(entry.date, planStart)}`
+      byGroup.set(key, [...(byGroup.get(key) ?? []), entry])
     }
 
-    for (const { name, entryIds } of occurrences.values()) {
-      if (entryIds.size > 1) {
-        for (const entryId of entryIds) {
-          push(entryId, `"${name}" repeats elsewhere in this plan - saved anyway`)
+    for (const sameGroup of byGroup.values()) {
+      const occurrences = new Map<string, { name: string; entryIds: Set<string> }>()
+      for (const entry of sameGroup) {
+        for (const dish of entry.dishes) {
+          const record = occurrences.get(dish.dishId) ?? {
+            name: dish.dishName,
+            entryIds: new Set<string>(),
+          }
+          record.entryIds.add(entry.entryId)
+          occurrences.set(dish.dishId, record)
+        }
+      }
+
+      for (const { name, entryIds } of occurrences.values()) {
+        if (entryIds.size > 1) {
+          for (const entryId of entryIds) {
+            push(entryId, `"${name}" repeats elsewhere in this plan - saved anyway`)
+          }
         }
       }
     }
