@@ -317,6 +317,38 @@ Update this file after every meaningful implementation change.
 
 ## Bug Fixes
 
+- **Dish card mobile actions + dish dialog UX bugs** (2026-07-09)
+  - **Dish card Edit/Delete hidden on mobile**: `components/dish-card.tsx`
+    revealed the Edit/Delete row only via `opacity-0 group-hover:opacity-100`,
+    which never triggers on touch devices with no hover state — the buttons
+    were effectively invisible on mobile. Fix: buttons are visible by default
+    (`opacity-100`) and only fade in on hover at `md:` and above
+    (`md:opacity-0 md:group-hover:opacity-100`), preserving the desktop
+    hover-reveal affordance.
+  - **Flavor changes silently dropped on Save**: `components/flavor-combobox.tsx`'s
+    text input only committed typed text to the `flavors` array on Enter or
+    the "Add" button — clicking Save (or anywhere else) with unconfirmed text
+    still in the input discarded it with no warning, reported as "can't
+    update the dish flavors." Confirmed create/edit/remove all persisted
+    correctly through the combobox's own Add/Enter/suggestion-click paths;
+    the bug was specifically uncommitted free-typed text. Fix: added
+    `onBlur` on the input that commits (`addFlavor`) any non-empty trimmed
+    text, so losing focus (e.g. clicking Save) no longer loses the flavor.
+  - **Meal Time radio / Special dish checkbox not primary-colored**:
+    `components/dish-dialog.tsx`'s native `<input type="radio">` /
+    `<input type="checkbox">` used `accent-current` (follows text color)
+    instead of the theme's primary token. Fix: switched both to
+    `accent-primary` (maps to the existing `--color-primary` CSS variable),
+    matching the "Add Dish" button and other primary-colored controls.
+  - **Files changed**: `components/dish-card.tsx`,
+    `components/flavor-combobox.tsx`, `components/dish-dialog.tsx`
+  - Verified: typecheck ✓, vitest ✓ (67 tests, unaffected), manual browser
+    walkthrough (mobile viewport shows Edit/Delete without hover; typed
+    flavor + direct Save click now persists; radio/checkbox render in
+    primary blue in both Create and Edit dialogs) — test flavors/values
+    added during verification were removed afterward, dish data restored
+    to its pre-test state.
+
 - **Ingredient Sheet — scroll fix + search filter** (2026-06-28)
   - **File**: `components/ingredient-sheet.tsx`
   - **Changes**:

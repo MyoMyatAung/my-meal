@@ -160,6 +160,9 @@ export function FlavorCombobox({ flavors, onChange }: FlavorComboboxProps) {
               setOpen(true)
             }}
             onFocus={() => setOpen(true)}
+            onBlur={() => {
+              if (input.trim()) addFlavor(input)
+            }}
             onKeyDown={handleKeyDown}
             placeholder={
               flavors.length >= 10 ? "Max 10 flavors reached" : "Type a flavor..."
