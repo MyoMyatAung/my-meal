@@ -192,7 +192,7 @@ export function DishDialog({
                     value="Breakfast"
                     checked={mealTime === MealTime.Breakfast}
                     onChange={() => setMealTime(MealTime.Breakfast)}
-                    className="accent-current"
+                    className="accent-primary"
                   />
                   Breakfast
                 </label>
@@ -203,7 +203,7 @@ export function DishDialog({
                     value="Lunch"
                     checked={mealTime === MealTime.Lunch}
                     onChange={() => setMealTime(MealTime.Lunch)}
-                    className="accent-current"
+                    className="accent-primary"
                   />
                   Lunch
                 </label>
@@ -221,7 +221,7 @@ export function DishDialog({
               checked={isSpecial}
               onChange={(e) => setIsSpecial(e.target.checked)}
               disabled={mealTime === MealTime.Breakfast}
-              className="accent-current"
+              className="accent-primary"
             />
             <label
               htmlFor="isSpecial"
