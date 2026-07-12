@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/log-error"
 import { ToggleShoppingItemSchema } from "@/lib/zod/shopping-list"
 
 async function getUserId() {
@@ -71,7 +72,8 @@ export async function toggleShoppingItemAction(input: {
     })
 
     return { success: true as const, data: { itemId: parsed.data.itemId } }
-  } catch {
+  } catch (e) {
+    logError("toggleShoppingItemAction", e)
     return { success: false as const, error: "Failed to update item" }
   }
 }

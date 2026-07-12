@@ -4,6 +4,7 @@ import { Prisma, type Category } from "@prisma/client"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/log-error"
 import { DishSchema, DishFilterSchema } from "@/lib/zod/dish"
 
 const dishInclude = {
@@ -139,7 +140,8 @@ export async function getFlavors(search?: string) {
     })
 
     return { success: true as const, data: { flavors } }
-  } catch {
+  } catch (e) {
+    logError("getFlavors", e)
     return { success: false as const, error: "Failed to fetch flavors" }
   }
 }
@@ -210,7 +212,8 @@ export async function getDishes(filters?: {
         totalPages,
       },
     }
-  } catch {
+  } catch (e) {
+    logError("getDishes", e)
     return { success: false as const, error: "Failed to fetch dishes" }
   }
 }
@@ -229,7 +232,8 @@ export async function getDishById(dishId: string) {
     }
 
     return { success: true as const, data: { dish: withPairedDishes(dish) } }
-  } catch {
+  } catch (e) {
+    logError("getDishById", e)
     return { success: false as const, error: "Failed to fetch dish" }
   }
 }
@@ -291,6 +295,7 @@ export async function createDish(formData: {
 
     return { success: true as const, data: { dish: withPairedDishes(dish) } }
   } catch (e) {
+    logError("createDish", e)
     if (e instanceof PairingValidationError) {
       return { success: false as const, error: e.message }
     }
@@ -367,6 +372,7 @@ export async function updateDish(
 
     return { success: true as const, data: { dish: withPairedDishes(dish) } }
   } catch (e) {
+    logError("updateDish", e)
     if (e instanceof PairingValidationError) {
       return { success: false as const, error: e.message }
     }
@@ -391,7 +397,8 @@ export async function deleteDish(dishId: string) {
     })
 
     return { success: true as const, data: { dishId } }
-  } catch {
+  } catch (e) {
+    logError("deleteDish", e)
     return { success: false as const, error: "Failed to delete dish" }
   }
 }

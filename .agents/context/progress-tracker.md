@@ -4,11 +4,11 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 8 — Dish Pairing + Updated Plan Generation Rules: Completed
+- Phase 9 — Server Action Error Logging: Completed
 
 ## Current Goal
 
-- None — all planned phases (1–8) complete.
+- None — all planned phases (1–9) complete.
 
 ## Completed
 
@@ -525,9 +525,30 @@ Update this file after every meaningful implementation change.
   `getDishCounts` per-category counts)
 - `app/(dashboard)/page.tsx` (modified — new gate banner messages)
 
+## Files Created/Modified in Phase 9
+
+- `lib/log-error.ts` (new — `logError(action, error)`, logs
+  `{ACTION} | {TIMESTAMP} : {ERROR_DETAIL}` via `console.error` so
+  failures surface in Vercel's runtime logs)
+- `app/actions/dishes.ts` (modified — `logError` call added to every
+  catch block: `getFlavors`, `getDishes`, `getDishById`, `createDish`,
+  `updateDish`, `deleteDish`)
+- `app/actions/plan.ts` (modified — `logError` added to
+  `generatePlanAction`, `getSwappableDishes`, `swapDishAction`)
+- `app/actions/shopping-list.ts` (modified — `logError` added to
+  `toggleShoppingItemAction`)
+- `app/actions/ingredients.ts` (modified — `logError` added to
+  `getIngredients`, `createIngredient`, `updateIngredient`,
+  `deleteIngredient`)
+- `app/actions/settings.ts` (modified — `logError` added to
+  `updateNameAction`, `updatePasswordAction`; never logs raw
+  password input, only the caught error's message)
+- No schema/migration changes — logging is console-based, not
+  persisted to Postgres, per explicit scope decision.
+
 ## In Progress
 
-- None (Phase 8 complete — all planned phases done)
+- None (Phase 9 complete — all planned phases done)
 
 ## Next Up
 

@@ -53,6 +53,12 @@
 - Return a consistent, predictable shape — e.g.
   `{ success: true, data } | { success: false, error }` — never let
   a raw Prisma error reach the client
+- Every catch block that returns `{ success: false, error }` must
+  also call `logError("<actionName>", e)` (from `lib/log-error.ts`)
+  before returning, so failures are visible in Vercel's runtime logs
+  as `{ACTION} | {TIMESTAMP} : {ERROR_DETAIL}`. Never pass raw
+  `formData`/`input` into the logged detail — the helper only logs
+  the caught error's own message, nothing from the request payload
 - The one exception to "Server Actions, not route handlers" is the
   NextAuth catch-all route (`app/api/auth/[...nextauth]/route.ts`),
   which Auth.js requires as a route handler

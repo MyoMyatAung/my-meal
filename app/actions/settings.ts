@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/log-error"
 import { UpdateNameSchema, UpdatePasswordSchema } from "@/lib/zod/settings"
 
 async function getUserId() {
@@ -29,7 +30,8 @@ export async function updateNameAction(input: { name: string }) {
     })
 
     return { success: true as const, data: { name: parsed.data.name } }
-  } catch {
+  } catch (e) {
+    logError("updateNameAction", e)
     return { success: false as const, error: "Failed to update name" }
   }
 }
@@ -63,7 +65,8 @@ export async function updatePasswordAction(input: {
     })
 
     return { success: true as const }
-  } catch {
+  } catch (e) {
+    logError("updatePasswordAction", e)
     return { success: false as const, error: "Failed to update password" }
   }
 }

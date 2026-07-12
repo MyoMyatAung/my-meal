@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/log-error"
 import { GeneratePlanSchema, SwapDishSchema } from "@/lib/zod/plan"
 import { Prisma } from "@prisma/client"
 import { generatePlan, PreFlightGateError } from "@/lib/planner/generate"
@@ -136,7 +137,8 @@ export async function generatePlanAction({
     })
 
     return { success: true as const, data: { planId: plan.id } }
-  } catch {
+  } catch (e) {
+    logError("generatePlanAction", e)
     return { success: false as const, error: "Failed to generate plan" }
   }
 }
@@ -252,7 +254,8 @@ export async function getSwappableDishes(mealTime: "Breakfast" | "Lunch") {
     })
 
     return { success: true as const, data: { dishes } }
-  } catch {
+  } catch (e) {
+    logError("getSwappableDishes", e)
     return { success: false as const, error: "Failed to fetch dishes" }
   }
 }
@@ -373,7 +376,8 @@ export async function swapDishAction(input: {
     })
 
     return { success: true as const, data: { entryDishId: entryDish.id } }
-  } catch {
+  } catch (e) {
+    logError("swapDishAction", e)
     return { success: false as const, error: "Failed to swap dish" }
   }
 }

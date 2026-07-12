@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/log-error"
 import { IngredientSchema } from "@/lib/zod/ingredient"
 
 async function getUserId() {
@@ -36,7 +37,8 @@ export async function getIngredients(search?: string) {
     })
 
     return { success: true as const, data: { ingredients } }
-  } catch {
+  } catch (e) {
+    logError("getIngredients", e)
     return { success: false as const, error: "Failed to fetch ingredients" }
   }
 }
@@ -72,6 +74,7 @@ export async function createIngredient(formData: { name: string }) {
       data: { ingredient, reused: false },
     }
   } catch (err) {
+    logError("createIngredient", err)
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
@@ -115,6 +118,7 @@ export async function updateIngredient(
 
     return { success: true as const, data: { ingredient } }
   } catch (err) {
+    logError("updateIngredient", err)
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
@@ -146,7 +150,8 @@ export async function deleteIngredient(ingredientId: string) {
     await prisma.ingredient.delete({ where: { id: ingredientId } })
 
     return { success: true as const, data: { ingredientId } }
-  } catch {
+  } catch (e) {
+    logError("deleteIngredient", e)
     return { success: false as const, error: "Failed to delete ingredient" }
   }
 }
