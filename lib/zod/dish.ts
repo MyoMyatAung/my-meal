@@ -34,6 +34,7 @@ export const DishFilterSchema = z.object({
   category: z.nativeEnum(Category).optional(),
   mealTime: z.nativeEnum(MealTime).optional(),
   search: z.string().trim().max(100).optional(),
+  isSpecial: z.boolean().optional(),
   /** 1-indexed current page (defaults to 1) */
   page: z.coerce.number().int().min(1).default(1),
   /** Number of dishes per page (defaults to 12, max 100) */

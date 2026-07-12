@@ -165,6 +165,7 @@ export async function getDishes(filters?: {
   category?: string
   mealTime?: string
   search?: string
+  isSpecial?: boolean
   page?: number
   pageSize?: number
 }) {
@@ -176,7 +177,7 @@ export async function getDishes(filters?: {
       return { success: false as const, error: "Invalid filters" }
     }
 
-    const { category, mealTime, search, page, pageSize } = parsed.data
+    const { category, mealTime, search, isSpecial, page, pageSize } = parsed.data
 
     const where: Prisma.DishWhereInput = {
       userId,
@@ -184,6 +185,7 @@ export async function getDishes(filters?: {
       ...(category ? { category } : {}),
       ...(mealTime ? { mealTime } : {}),
       ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+      ...(isSpecial ? { isSpecial: true } : {}),
     }
 
     const skip = (page - 1) * pageSize

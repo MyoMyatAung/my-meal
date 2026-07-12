@@ -39,6 +39,7 @@ export function DishPairingCombobox({
   // Search-filtered results shown in the dropdown
   const [dishes, setDishes] = useState<PairableDish[]>([])
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   // Accumulates every dish ever fetched so selected badges are always
   // resolved from the full known set, not the search-filtered subset.
   const allDishesRef = useRef<Map<string, PairableDish>>(new Map())
@@ -62,8 +63,13 @@ export function DishPairingCombobox({
   )
 
   useEffect(() => {
-    fetchDishes(search || undefined)
-  }, [search, fetchDishes])
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    fetchDishes(debouncedSearch || undefined)
+  }, [debouncedSearch, fetchDishes])
 
   // Derive selected badges from the full cache — unaffected by search query
   const selectedDishes = useMemo(

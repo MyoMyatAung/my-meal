@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, StarIcon } from "lucide-react"
 import { Category, MealTime } from "@prisma/client"
 import { getDishes } from "@/app/actions/dishes"
 import type { DishWithRelations } from "@/app/actions/dishes"
@@ -34,6 +34,7 @@ export function DishLibrary() {
   const [loading, setLoading] = useState(true)
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [mealTimeFilter, setMealTimeFilter] = useState<string>("all")
+  const [specialOnly, setSpecialOnly] = useState(false)
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
 
@@ -58,17 +59,18 @@ export function DishLibrary() {
   // Reset to page 1 whenever a filter dropdown changes.
   useEffect(() => {
     setPage(1)
-  }, [categoryFilter, mealTimeFilter])
+  }, [categoryFilter, mealTimeFilter, specialOnly])
 
   const fetchDishes = useCallback(async () => {
     setLoading(true)
-    const filters: Record<string, string | number> = {
+    const filters: Record<string, string | number | boolean> = {
       page,
       pageSize: PAGE_SIZE,
     }
     if (categoryFilter !== "all") filters.category = categoryFilter
     if (mealTimeFilter !== "all") filters.mealTime = mealTimeFilter
     if (debouncedSearch) filters.search = debouncedSearch
+    if (specialOnly) filters.isSpecial = true
 
     const result = await getDishes(filters)
     if (result.success) {
@@ -77,7 +79,7 @@ export function DishLibrary() {
       setTotalPages(result.data.totalPages)
     }
     setLoading(false)
-  }, [categoryFilter, mealTimeFilter, debouncedSearch, page])
+  }, [categoryFilter, mealTimeFilter, specialOnly, debouncedSearch, page])
 
   useEffect(() => {
     fetchDishes()
@@ -154,6 +156,16 @@ export function DishLibrary() {
           placeholder="Search dishes..."
           className="max-w-[200px]"
         />
+
+        <Button
+          variant={specialOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSpecialOnly((v) => !v)}
+          aria-pressed={specialOnly}
+        >
+          <StarIcon className={specialOnly ? "fill-current" : undefined} />
+          Special
+        </Button>
       </div>
 
       {loading ? (

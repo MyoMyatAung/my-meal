@@ -39,6 +39,7 @@ export function IngredientCombobox({
   // Search-filtered results shown in the dropdown
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sheetOpen, setSheetOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   // Accumulates every ingredient ever fetched so selected badges
@@ -56,8 +57,13 @@ export function IngredientCombobox({
   }, [])
 
   useEffect(() => {
-    fetchIngredients(search || undefined)
-  }, [search, fetchIngredients])
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    fetchIngredients(debouncedSearch || undefined)
+  }, [debouncedSearch, fetchIngredients])
 
   // Derive selected badges from the full cache — unaffected by search query
   const selectedIngredients = useMemo(
